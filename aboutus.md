@@ -1,7 +1,10 @@
 ---
 layout: page
-title: About Us
-subtitle: 
+title: 关于我们
 ---
 
-Panda Pattern was launched in 2025 as a digital sewing tool that projects patterns directly onto fabric, enabling precise, paperless cutting and streamlined garment creation. The goal was simple: simplify the sewing process by eliminating the need for printed patterns.
+**熊手纸样**于2025年推出，是一套PDF数字纸样裁切辅助工具。缝纫爱好者通过它，可以DIY投影纸样裁切，使用自己的投影仪，将自有PDF纸样投影到面料上，实现精确、无纸化的裁剪，以简化缝纫流程。
+
+我们的目标很简单：以开放的方式，帮助缝纫爱好者DIY投影纸样，简化缝纫裁切流程。
+
+享受手工，简单创意。

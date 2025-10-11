@@ -10,7 +10,7 @@
 ############################
 
 # Name of website
-title: Panda Pattern
+title: 熊手纸样
 
 # Your name to show in the footer
 author: Panda Pattern
@@ -20,8 +20,8 @@ author: Panda Pattern
 ###############################################
 
 navbar-links:
-  Designer: "designer"
-  About Us: "aboutus"
+  设计师: "designer"
+  关于我们: "aboutus"
 
 ################
 # --- Logo --- #
@@ -126,6 +126,8 @@ edit_page_button: false
 # If this setting is off, then long sub-menu words might get cut off
 # See https://github.com/daattali/beautiful-jekyll/issues/765 to understand the issue this setting can solve
 navbar-var-length: false
+
+remove-ads: true
 
 # The keywords to associate with your website, for SEO purposes
 #keywords: "my,list,of,keywords"
