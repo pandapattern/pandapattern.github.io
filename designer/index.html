@@ -52,7 +52,8 @@
 
     /* file input nicer */
     .fileRow{display:flex; align-items:center; gap:8px;}
-    .fileName{font-size:13px; color:#111; padding:8px 10px; background:#fafafa; border-radius:8px; border:1px dashed #eee; flex:1;}
+    .fileName{font-size:13px; color:#111; padding:8px 10px; background:#fafafa; border-radius:8px; border:1px dashed #eee; flex:1; display:flex; justify-content:space-between; align-items:center;}
+    .fileSize{font-size:12px; color:var(--muted); margin-left:8px;}
 
     /* materials table improvements */
     .materialsWrap { overflow:auto; max-width:100%; }
@@ -71,6 +72,16 @@
     .pat-actions { display:flex; gap:6px; align-items:center; }
     .mutedCell { color:var(--muted); font-size:12px; }
     .tinyBtn { padding:6px 8px; font-size:13px; border-radius:8px; }
+    .radioRow { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:6px; }
+    .radioRow label { font-weight:500; font-size:13px; }
+
+    /* auth row: prevent wrap of sign buttons */
+    .authRow { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
+    .authRow input[type="email"], .authRow input[type="password"] { flex:1; min-width:140px; }
+    .authRow button { white-space:nowrap; }
+    @media (max-width:560px) {
+      .authRow { flex-wrap:wrap; } /* extremely narrow screens allow wrap */
+    }
   </style>
 </head>
 <body>
@@ -78,7 +89,7 @@
     <header>
       <div>
         <h1>设计师面板 — 纸样 & 教程 管理</h1>
-        <div class="subtitle">上传原始 PDF → 后端处理 → 下载处理后 PDF</div>
+        <div class="subtitle">上传纸样 PDF → 后端处理 → 下载处理后 PDF</div>
       </div>
       <div id="userArea" class="muted">未登录</div>
     </header>
@@ -91,44 +102,36 @@
     <div class="grid">
       <!-- left: main -->
       <div>
+        <!-- AUTH (separate 登录 / 注册) -->
         <div class="card">
-          <label>邮箱登录（邮箱 + 密码）</label>
-          <div style="display:flex; gap:8px;">
+          <label>邮箱登录 / 注册</label>
+          <div class="authRow">
             <input id="emailInput" type="email" placeholder="designer@example.com" />
             <input id="passwordInput" type="password" placeholder="密码" />
-            <button id="signInBtn">登录 / 自动注册（若未注册）</button>
+            <button id="signInBtn">登录</button>
+            <button id="registerBtn" class="ghost">注册</button>
             <button id="signOutBtn" class="ghost" style="display:none;">登出</button>
           </div>
-          <div class="smallNote">若该邮箱尚未注册，系统会尝试为你创建账号（若需要邮箱确认，会提示）。</div>
+          <div class="smallNote">注册后会发送验证邮件。</div>
         </div>
 
-        <!-- CREATE & UPLOAD FIRST -->
+        <!-- CREATE & UPLOAD -->
         <div class="card" style="margin-top:16px;">
-          <h3 style="margin:0 0 8px 0;">创建纸样 & 上传 PDF</h3>
-          <label>纸样标题</label>
-          <input id="titleInput" type="text" placeholder="纸样标题" />
+          <h3 style="margin:0 0 8px 0;">纸样</h3>
+          <label>纸样名称</label>
+          <input id="titleInput" type="text" placeholder="纸样名称" />
 
           <label>纸样描述</label>
           <textarea id="descInput" placeholder="简短描述..."></textarea>
 
-          <label>App 下载 / 打开 链接（二维码指向）</label>
-          <input id="appUrl" type="text" placeholder="https://example.com/open?pattern=..." />
-
-          <label>Pattern ID（编辑时会自动填充）</label>
-          <input id="patternIdInput" type="text" placeholder="pattern id (创建/编辑后自动填充)" />
-
-          <label>PDF 文件（原始）</label>
+          <label>上传纸样 PDF 文件（不超过 50M）</label>
           <div class="fileRow">
             <input id="pdfFile" type="file" accept="application/pdf" />
-            <div id="fileName" class="fileName">未选择文件</div>
+            <div id="fileName" class="fileName">未选择文件 <span id="fileSize" class="fileSize"></span></div>
           </div>
 
-          <label>Storage bucket (原始存储位置)</label>
-          <input id="bucketName" type="text" value="patterns-originals" />
-
-          <div class="row">
-            <button id="createAndUploadBtn">创建并上传(并触发处理)</button>
-            <button id="justCreateBtn" class="ghost">仅创建 Pattern</button>
+          <div class="row" style="margin-top:14px;">
+            <button id="createAndUploadBtn">上传纸样</button>
             <button id="savePatternChangesBtn" class="ghost" style="display:none;">保存修改</button>
           </div>
 
@@ -143,11 +146,11 @@
 
         <!-- MATERIALS AFTER CREATE -->
         <div class="card" style="margin-top:16px;">
-          <h3 style="margin:0 0 8px 0;">材料清单（pattern_materials）</h3>
+          <h3 style="margin:0 0 8px 0;">材料清单</h3>
           <div class="row">
-            <button id="loadMaterialsBtn" class="ghost">加载材料</button>
             <button id="addMaterialBtn" class="ghost">+ 新增行</button>
             <button id="saveMaterialsBtn" class="ghost">保存</button>
+            <button id="loadMaterialsBtn" class="ghost">从材料库里添加</button>
           </div>
           <div class="materialsWrap" style="margin-top:10px;">
             <table class="mat" id="materialsTable">
@@ -159,22 +162,26 @@
 
         <!-- TUTORIALS AFTER MATERIALS -->
         <div class="card" style="margin-top:16px;">
-          <h3 style="margin:0 0 8px 0;">教程 / 媒体 (tutorial_media)</h3>
-          <label>媒体标题</label>
+          <h3 style="margin:0 0 8px 0;">教程文件</h3>
+
+          <label>教程名称</label>
           <input id="tutorialTitle" type="text" placeholder="教程标题" />
+
           <label>类型</label>
-          <select id="tutorialType">
-            <option value="text">text (文本)</option>
-            <option value="pdf">pdf (上传)</option>
-            <option value="image">image (上传)</option>
-            <option value="video">video (上传)</option>
-            <option value="external_link">external_link (外部链接)</option>
-          </select>
-          <label>外链 / 文本 / 文件</label>
-          <input id="tutorialLink" type="text" placeholder="外部链接或简短说明" />
-          <input id="tutorialFile" type="file" />
-          <div class="row">
-            <button id="uploadTutorialBtn">上传并保存教程媒体</button>
+          <div class="radioRow" id="tutorialTypeRow">
+            <label><input type="radio" name="tutType" value="text" checked> 文本</label>
+            <label><input type="radio" name="tutType" value="pdf"> PDF（上传，≤50M）</label>
+            <label><input type="radio" name="tutType" value="image"> 图片（上传，≤50M）</label>
+            <label><input type="radio" name="tutType" value="video"> 视频（上传，≤50M）</label>
+            <label><input type="radio" name="tutType" value="external_link"> 外部链接</label>
+          </div>
+
+          <label id="tutorialBodyLabel" style="margin-top:10px;">外链 / 文本 / 文件</label>
+          <input id="tutorialLink" type="text" placeholder="外部链接或简短说明" style="display:block;" />
+          <input id="tutorialFile" type="file" style="display:none;" />
+
+          <div class="row" style="margin-top:10px;">
+            <button id="uploadTutorialBtn">上传教程文件</button>
             <button id="listTutorialsBtn" class="ghost">列出教程</button>
           </div>
 
@@ -186,7 +193,7 @@
       <div class="rightCol">
         <!-- COMPACT Patterns list -->
         <div class="card">
-          <h4 style="margin:0 0 6px 0;">我的纸样（仅标题 + 操作）</h4>
+          <h4 style="margin:0 0 6px 0;">我的纸样</h4>
           <div class="row" style="margin-top:10px;">
             <button id="refreshPatternsBtn" class="ghost">刷新</button>
             <button id="newPatternFocusBtn" class="ghost">新建</button>
@@ -206,7 +213,7 @@
 
         <div class="card" style="margin-top:12px;">
           <div class="muted small">说明</div>
-          <div class="smallNote">点击编辑会把选中的纸样信息填到左侧表单，修改后点“保存修改”提交更改。上传会显示实时进度。</div>
+          <div class="smallNote">上传文件限制 50MB，超出将被阻止。编辑时会把选中的纸样信息填到左侧表单，修改后点“保存修改”提交更改。</div>
         </div>
       </div>
     </div>
@@ -231,18 +238,16 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const emailInput = document.getElementById('emailInput');
 const passwordInput = document.getElementById('passwordInput');
 const signInBtn = document.getElementById('signInBtn');
+const registerBtn = document.getElementById('registerBtn');
 const signOutBtn = document.getElementById('signOutBtn');
 const userArea = document.getElementById('userArea');
 
 const titleInput = document.getElementById('titleInput');
 const descInput = document.getElementById('descInput');
-const appUrlInput = document.getElementById('appUrl');
-const patternIdInput = document.getElementById('patternIdInput');
 const pdfFileInput = document.getElementById('pdfFile');
 const fileNameEl = document.getElementById('fileName');
-const bucketNameEl = document.getElementById('bucketName');
+const fileSizeEl = document.getElementById('fileSize');
 const createAndUploadBtn = document.getElementById('createAndUploadBtn');
-const justCreateBtn = document.getElementById('justCreateBtn');
 const savePatternChangesBtn = document.getElementById('savePatternChangesBtn');
 const uploadProgressWrap = document.getElementById('uploadProgressWrap');
 const uploadBar = document.getElementById('uploadBar');
@@ -250,11 +255,12 @@ const uploadPct = document.getElementById('uploadPct');
 const processedInfo = document.getElementById('processedInfo');
 
 const tutorialTitle = document.getElementById('tutorialTitle');
-const tutorialType = document.getElementById('tutorialType');
+const tutorialTypeRow = document.getElementById('tutorialTypeRow');
 const tutorialLink = document.getElementById('tutorialLink');
 const tutorialFile = document.getElementById('tutorialFile');
 const uploadTutorialBtn = document.getElementById('uploadTutorialBtn');
 const listTutorialsBtn = document.getElementById('listTutorialsBtn');
+const tutorialsList = document.getElementById('tutorialsList');
 
 const addMaterialBtn = document.getElementById('addMaterialBtn');
 const saveMaterialsBtn = document.getElementById('saveMaterialsBtn');
@@ -272,9 +278,11 @@ const refreshPatternsBtn = document.getElementById('refreshPatternsBtn');
 const patternsTbody = document.getElementById('patternsTbody');
 const newPatternFocusBtn = document.getElementById('newPatternFocusBtn');
 
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+
 let supabase = null;
 let currentUser = null;
-let editingPatternId = null;
+let editingPatternId = null; // hidden internal id of the pattern being edited
 
 /* utility logger */
 function log(...args){
@@ -307,13 +315,26 @@ function updateUserInfo(user){
     userArea.textContent = '未登录';
     signOutBtn.style.display = 'none';
     signInBtn.style.display = '';
+    registerBtn.style.display = '';
     patternsTbody.innerHTML = '';
+    // clear editing state and visible content
+    editingPatternId = null;
+    titleInput.value = '';
+    descInput.value = '';
+    materialsTbody.innerHTML = '';
+    tutorialsList.innerHTML = '';
+    processedInfo.innerHTML = '';
+    ensureFiveRows();
   } else {
     userArea.textContent = `${user.email || user.id}`;
     signOutBtn.style.display = '';
     signInBtn.style.display = 'none';
+    registerBtn.style.display = 'none';
+    // auto load patterns for this user
     loadPatterns();
   }
+  // update action buttons based on editingPatternId / login state
+  updateActionButtonsState();
 }
 
 /* ==== Busy UI helpers ==== */
@@ -336,10 +357,27 @@ function setBusyUI(on, message){
   const allButtons = document.querySelectorAll('button');
   allButtons.forEach(b => b.disabled = on);
   if(on) { showOverlay(message || '处理中…'); setStatus(message || '处理中…', true); }
-  else { hideOverlay(); setStatus('', false); }
+  else { hideOverlay(); setStatus('', false); updateActionButtonsState(); }
 }
 
-/* ==== Auth handlers: signIn with auto-signUp fallback ==== */
+/* ===== buttons enable/disable based on whether a pattern is selected ===== */
+function updateActionButtonsState(){
+  // buttons that require an existing/selected pattern (pattern_id)
+  const requirePatternButtons = [ saveMaterialsBtn, loadMaterialsBtn, uploadTutorialBtn, listTutorialsBtn, savePatternChangesBtn ];
+  const isEnabled = !!editingPatternId && !!currentUser;
+  requirePatternButtons.forEach(b => {
+    if(!b) return;
+    b.disabled = !isEnabled;
+    b.title = isEnabled ? '' : '请先创建或选择一个纸样';
+  });
+  // allow adding rows even without saved pattern (draft)
+  if(addMaterialBtn) {
+    addMaterialBtn.disabled = false;
+    addMaterialBtn.title = '';
+  }
+}
+
+/* ==== AUTH: 登录 与 注册（分开） ==== */
 signInBtn.addEventListener('click', async () => {
   try {
     initSupabase();
@@ -348,64 +386,86 @@ signInBtn.addEventListener('click', async () => {
     if(!email || !password) return alert('请填写邮箱和密码');
     setBusyUI(true, '登录中...');
     log('[Auth] signIn attempt', email);
-
-    // try sign in
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if(error){
-      log('[Auth] signIn failed', error);
-      if(error?.status === 400 || (error?.message && error.message.toLowerCase().includes('invalid'))){
-        log('[Auth] trying signUp fallback (auto-register)');
-        const { data: upData, error: upErr } = await supabase.auth.signUp({ email, password });
-        if(upErr){
-          log('[Auth] signUp failed', upErr);
-          alert('注册失败: ' + (upErr.message || JSON.stringify(upErr)));
-          setBusyUI(false);
-          return;
-        }
-        log('[Auth] signUp success', upData);
-        const { data: signin2, error: signin2Err } = await supabase.auth.signInWithPassword({ email, password });
-        if(signin2Err){
-          log('[Auth] signIn after signUp failed', signin2Err);
-          alert('注册成功，请检查邮箱并完成确认后再次登录（若启用了邮箱确认）。错误: ' + (signin2Err.message || JSON.stringify(signin2Err)));
-          setBusyUI(false);
-          return;
-        }
-        log('[Auth] signIn after signUp success', signin2);
-        updateUserInfo(signin2.user);
-        setBusyUI(false);
-        alert('已自动注册并登录。');
-        return;
-      } else {
-        alert('登录失败: ' + (error.message || JSON.stringify(error)));
-        setBusyUI(false);
-        return;
-      }
-    }
-
+    setBusyUI(false);
+    if(error){ log('[Auth] signIn failed', error); alert('登录失败: ' + (error.message || JSON.stringify(error))); return; }
     log('[Auth] signIn success', data?.user?.email || data?.user?.id);
     updateUserInfo(data.user);
-    setBusyUI(false);
   } catch(e){
     setBusyUI(false);
     log('[Auth] exception', e);
     alert('登录异常: ' + (e.message || JSON.stringify(e)));
   }
 });
+
+/* Improved signUp:
+   - 使用 redirectTo：使得确认邮件返回到当前页面
+   - 更友好的错误处理（已注册等）
+*/
+registerBtn.addEventListener('click', async () => {
+  try {
+    initSupabase();
+    const email = (emailInput.value||'').trim();
+    const password = (passwordInput.value||'').trim();
+    if(!email || !password) return alert('请填写邮箱和密码用于注册');
+
+    const redirectTo = window.location.origin + window.location.pathname; // 回到当前页面
+    setBusyUI(true, '注册中（将发送验证邮件）...');
+    log('[Auth] signUp attempt', email);
+
+    const { data, error } = await supabase.auth.signUp(
+      { email, password },
+      { redirectTo }
+    );
+    setBusyUI(false);
+
+    if (error) {
+      log('[Auth] signUp failed', error);
+      const msg = (error.message || '').toLowerCase();
+      // 常见已注册提示判断（不同项目/版本返回的 message 会不同）
+      if (msg.includes('already') || msg.includes('exist') || msg.includes('registered') || error.status === 400 || error.status === 409) {
+        return alert('该邮箱已被注册。请直接使用“登录”进行登录，或使用忘记密码流程重置密码。');
+      }
+      return alert('注册失败: ' + (error.message || JSON.stringify(error)));
+    }
+
+    alert('注册成功，验证邮件已发送。请打开你的邮箱并点击验证链接。验证完成后请返回此页面并使用「登录」按钮登录（如果验证链接包含 token，本页面会尝试自动登录）。');
+    log('[Auth] signUp result', data);
+  } catch(e){
+    setBusyUI(false);
+    log('[Auth] signUp exception', e);
+    alert('注册异常: ' + (e.message || JSON.stringify(e)));
+  }
+});
+
 signOutBtn.addEventListener('click', async () => {
   if(!supabase) initSupabase();
   await supabase.auth.signOut();
+  editingPatternId = null;
   updateUserInfo(null);
+  updateActionButtonsState();
 });
 
-/* show chosen filename */
+/* show chosen filename + size and enforce 50MB limit for main PDF */
 pdfFileInput.addEventListener('change', () => {
   const f = pdfFileInput.files[0];
-  fileNameEl.textContent = f ? `${f.name} (${Math.round(f.size/1024)} KB)` : '未选择文件';
+  if(!f) {
+    fileNameEl.innerHTML = '未选择文件 <span id="fileSize" class="fileSize"></span>';
+    fileSizeEl.textContent = '';
+    return;
+  }
+  if(f.size > MAX_FILE_BYTES) {
+    alert('文件过大（>50MB），请选择更小的 PDF');
+    pdfFileInput.value = '';
+    fileNameEl.innerHTML = '未选择文件 <span id="fileSize" class="fileSize"></span>';
+    return;
+  }
+  const sizeKB = Math.round(f.size / 1024);
+  fileNameEl.innerHTML = `<span style="flex:1">${f.name}</span><span class="fileSize">${sizeKB} KB</span>`;
 });
 
-/* ==== API wrappers (create/upload/process/get-signed) ==== */
-async function callCreatePattern(title, description, appDownloadUrl){
+/* ==== API wrappers (simplified) ==== */
+async function callCreatePattern(title, description){
   initSupabase();
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
@@ -414,7 +474,7 @@ async function callCreatePattern(title, description, appDownloadUrl){
   if(token) headers['Authorization'] = 'Bearer ' + token;
   else throw new Error('未登录：需要登录以创建纸样');
   setStatus('创建 pattern...', true);
-  const resp = await fetch(url, { method:'POST', headers, body: JSON.stringify({ title, description, appDownloadUrl }) });
+  const resp = await fetch(url, { method:'POST', headers, body: JSON.stringify({ title, description }) });
   const j = await resp.json().catch(()=>({ status: resp.status, text: 'non-json' }));
   log('[create-pattern] resp', j);
   if(!j.ok) throw new Error('create-pattern failed: ' + JSON.stringify(j));
@@ -422,7 +482,7 @@ async function callCreatePattern(title, description, appDownloadUrl){
   return j.pattern;
 }
 
-/* upload via server using XHR so we can show upload progress */
+/* upload via server using XHR (show progress) */
 function uploadFileViaServerXHR(patternId, file, bucket=null){
   return new Promise((resolve, reject) => {
     initSupabase();
@@ -472,14 +532,15 @@ function uploadFileViaServerXHR(patternId, file, bucket=null){
   });
 }
 
-async function callProcessPatternPdfWithPath(patternId, originalPath, appDownloadUrl){
+/* process-pattern-pdf call */
+async function callProcessPatternPdfWithPath(patternId, originalPath){
   initSupabase();
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
   if(!token) throw new Error('未登录或 token 为空');
   const url = `${SUPABASE_URL}/functions/v1/process-pattern-pdf`;
   const headers = { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token };
-  const body = { patternId, originalFilePath: originalPath, appDownloadUrl };
+  const body = { patternId, originalFilePath: originalPath };
   setStatus('请求后端处理 PDF...', true);
   const resp = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
   const j = await resp.json().catch(()=>({ status: resp.status, text: 'non-json' }));
@@ -488,6 +549,7 @@ async function callProcessPatternPdfWithPath(patternId, originalPath, appDownloa
   return j;
 }
 
+/* get-signed-pdf wrapper */
 async function getSignedPdfForPattern(patternId, expiresSec = 300){
   initSupabase();
   const { data } = await supabase.auth.getSession();
@@ -504,29 +566,81 @@ async function getSignedPdfForPattern(patternId, expiresSec = 300){
   return j;
 }
 
+/* ===== Helper to load materials / tutorials for a pattern ===== */
+async function loadMaterialsForPattern(pid){
+  try {
+    if(!pid) return;
+    initSupabase();
+    setBusyUI(true, '加载该纸样的材料...');
+    const { data, error } = await supabase.from('pattern_materials').select('*').eq('pattern_id', pid).order('seq', { ascending:true });
+    setBusyUI(false);
+    if(error){ log('load materials for pattern err', error); alert('加载材料失败: ' + error.message); return; }
+    // replace current material rows
+    materialsTbody.innerHTML = '';
+    if(!data || data.length === 0){
+      ensureFiveRows(); // keep 5 blank rows
+      return;
+    }
+    data.forEach(d => addMaterialRow(d));
+    refreshMaterialIndexes();
+  } catch(e){
+    setBusyUI(false);
+    log('loadMaterialsForPattern exception', e);
+    alert('加载材料异常: ' + e.message);
+  }
+}
+
+async function loadTutorialsForPattern(pid){
+  try {
+    if(!pid) return;
+    initSupabase();
+    setBusyUI(true, '加载该纸样的教程...');
+    const { data, error } = await supabase.from('tutorial_media').select('*').eq('pattern_id', pid).order('seq', { ascending:true });
+    setBusyUI(false);
+    if(error){ log('load tutorials for pattern err', error); tutorialsList.innerHTML = `<div class="muted">加载失败: ${error.message}</div>`; return; }
+    tutorialsList.innerHTML = '';
+    if(!data || data.length === 0){ tutorialsList.innerHTML = '<div class="muted">暂无教程</div>'; return; }
+    const wrap = document.createElement('div');
+    data.forEach(d => {
+      const el = document.createElement('div');
+      el.innerHTML = `<strong>[${d.media_type}] ${d.title || ''}</strong>
+        <div>${d.body ? d.body : ''}</div>
+        <div>${d.media_path ? '<a target="_blank" class="link" href="' + (SUPABASE_URL.replace('/.co','') + '/storage/v1/object/public/' + d.media_path) + '">打开媒体 (Storage)</a>' : ''}</div><hr/>`;
+      wrap.appendChild(el);
+    });
+    tutorialsList.appendChild(wrap);
+  } catch(e){
+    setBusyUI(false);
+    log('loadTutorialsForPattern exception', e);
+    tutorialsList.innerHTML = `<div class="muted">异常: ${e.message}</div>`;
+  }
+}
+
 /* ===== UI flows ===== */
+/* 上传纸样（创建 pattern + 上传原始 PDF + 触发处理） */
 createAndUploadBtn.addEventListener('click', async () => {
   try {
     initSupabase();
     const file = pdfFileInput.files[0];
     const title = (titleInput.value||'').trim();
     const desc = (descInput.value||'').trim();
-    const appDownloadUrl = (appUrlInput.value||'').trim() || undefined;
-    const bucket = (bucketNameEl.value||'patterns-originals').trim();
     if(!title) return alert('请填写纸样标题');
-    if(!file) return alert('请选择 PDF 文件');
+    if(!file) return alert('请选择 PDF 文件（不超过50MB）');
+    if(file.size > MAX_FILE_BYTES) return alert('文件超过50MB，无法上传');
 
-    setBusyUI(true, '创建 paper 并上传中...');
-    const pattern = await callCreatePattern(title, desc, appDownloadUrl);
+    setBusyUI(true, '创建 pattern 并上传纸样...');
+    const pattern = await callCreatePattern(title, desc);
     log('[UI] pattern created', pattern);
-    patternIdInput.value = pattern.id;
+    // store editingPatternId internally (hidden)
+    editingPatternId = pattern.id;
+    updateActionButtonsState();
 
     setStatus('上传原始 PDF...', true);
-    const originalPath = await uploadFileViaServerXHR(pattern.id, file, bucket);
+    const originalPath = await uploadFileViaServerXHR(pattern.id, file, /*bucket*/ null);
     log('[UI] originalPath', originalPath);
 
     setStatus('触发后端处理...', true);
-    const proc = await callProcessPatternPdfWithPath(pattern.id, originalPath, appDownloadUrl);
+    const proc = await callProcessPatternPdfWithPath(pattern.id, originalPath);
 
     processedInfo.innerHTML = `<div><strong>后端返回：</strong><pre>${JSON.stringify(proc, null, 2)}</pre></div>`;
     const signedUrl = proc?.signedUrl || proc?.signed_url || proc?.signed || proc?.downloadUrl;
@@ -551,6 +665,14 @@ createAndUploadBtn.addEventListener('click', async () => {
       log('[UI] process response no recognized link');
     }
 
+    // show save button since we are now editing this pattern
+    savePatternChangesBtn.style.display = 'inline-block';
+    updateActionButtonsState();
+
+    // after creating, auto-load materials & tutorials for this pattern
+    await loadMaterialsForPattern(editingPatternId);
+    await loadTutorialsForPattern(editingPatternId);
+
     await loadPatterns();
     processedInfo.scrollIntoView({ behavior: 'smooth' });
     setBusyUI(false);
@@ -562,48 +684,24 @@ createAndUploadBtn.addEventListener('click', async () => {
   }
 });
 
-/* just create */
-justCreateBtn.addEventListener('click', async () => {
-  try {
-    initSupabase();
-    const title = (titleInput.value||'').trim();
-    const desc = (descInput.value||'').trim();
-    const appDownloadUrl = (appUrlInput.value||'').trim() || undefined;
-    if(!title) return alert('请填写纸样标题');
-    setBusyUI(true, '创建 pattern...');
-    const p = await callCreatePattern(title, desc, appDownloadUrl);
-    patternIdInput.value = p.id;
-    setBusyUI(false);
-    alert('已创建 pattern: ' + p.id);
-    await loadPatterns();
-  } catch(e) {
-    setBusyUI(false);
-    log('create error', e);
-    alert('创建失败: ' + (e.message || JSON.stringify(e)));
-  }
-});
-
-/* SAVE CHANGES for edited pattern */
+/* 保存对已选 paper 的修改（仅 title & description） */
 savePatternChangesBtn.addEventListener('click', async () => {
   try {
-    if(!editingPatternId) return alert('没有正在编辑的 paper');
+    if(!editingPatternId) return alert('请先选择或创建一个 paper（点击列表的“编辑”或先上传）');
     const newTitle = (titleInput.value||'').trim();
     const newDesc = (descInput.value||'').trim();
-    const newAppUrl = (appUrlInput.value||'').trim() || null;
     if(!newTitle) return alert('标题不能为空');
     setBusyUI(true, '保存修改中...');
     const { data, error } = await supabase.from('patterns').update({
       title: newTitle,
-      description: newDesc,
-      app_download_url: newAppUrl
+      description: newDesc
     }).eq('id', editingPatternId).select();
     setBusyUI(false);
     if(error){ log('save edited pattern err', error); alert('保存失败: ' + error.message); return; }
     alert('保存成功');
-    // refresh list and clear editing state
-    editingPatternId = null;
-    savePatternChangesBtn.style.display = 'none';
+    // refresh list and keep editing id
     await loadPatterns();
+    updateActionButtonsState();
   } catch(e){
     setBusyUI(false);
     log('save edited pattern exception', e);
@@ -611,13 +709,30 @@ savePatternChangesBtn.addEventListener('click', async () => {
   }
 });
 
-/* tutorial upload & list (kept) */
+/* tutorial type single-select behaviour (show/hide file input) */
+function getSelectedTutorialType(){
+  const radios = document.querySelectorAll('input[name="tutType"]');
+  for(const r of radios) if(r.checked) return r.value;
+  return 'text';
+}
+tutorialTypeRow.addEventListener('change', () => {
+  const sel = getSelectedTutorialType();
+  if(sel === 'text' || sel === 'external_link'){
+    tutorialLink.style.display = 'block';
+    tutorialFile.style.display = 'none';
+  } else {
+    tutorialLink.style.display = 'none';
+    tutorialFile.style.display = 'block';
+  }
+});
+
+// tutorial upload flow: file types limited to 50MB
 uploadTutorialBtn.addEventListener('click', async () => {
   try {
     initSupabase();
-    const pid = (patternIdInput.value||'').trim();
-    if(!pid) return alert('请填写 patternId');
-    const type = tutorialType.value;
+    if(!editingPatternId) return alert('请先创建或选择一个纸样（点击右侧列表的 编辑）');
+    const pid = editingPatternId;
+    const type = getSelectedTutorialType();
     const title = (tutorialTitle.value||'').trim();
     let body = (tutorialLink.value||'').trim();
     let media_path = null;
@@ -631,6 +746,7 @@ uploadTutorialBtn.addEventListener('click', async () => {
     } else {
       const f = tutorialFile.files[0];
       if(!f) { setBusyUI(false); return alert('请选择文件上传'); }
+      if(f.size > MAX_FILE_BYTES){ setBusyUI(false); return alert('文件超过50MB，无法上传'); }
       const path = await uploadFileViaServerXHR(pid, f, 'patterns-assets');
       media_path = path;
     }
@@ -642,6 +758,8 @@ uploadTutorialBtn.addEventListener('click', async () => {
     if(error){ setBusyUI(false); log('tutorial insert err', error); alert('插入失败: ' + error.message); return; }
     setBusyUI(false);
     alert('教程媒体保存成功');
+    // reload tutorials list
+    await loadTutorialsForPattern(pid);
   } catch(e){
     setBusyUI(false);
     log('upload tutorial err', e);
@@ -649,30 +767,13 @@ uploadTutorialBtn.addEventListener('click', async () => {
   }
 });
 
+/* list tutorials (button) */
 listTutorialsBtn.addEventListener('click', async () => {
-  try {
-    initSupabase();
-    const pid = (patternIdInput.value||'').trim();
-    if(!pid) return alert('请填写 patternId');
-    setBusyUI(true, '读取教程...');
-    const { data, error } = await supabase.from('tutorial_media').select('*').eq('pattern_id', pid).order('seq', { ascending:true });
-    setBusyUI(false);
-    if(error){ log('list tutorials err', error); alert('错误:' + error.message); return; }
-    tutorialsList.innerHTML = '';
-    if(!data || data.length === 0) { tutorialsList.innerHTML = '<div class="muted">暂无教程</div>'; return; }
-    const wrap = document.createElement('div');
-    data.forEach(d => {
-      const el = document.createElement('div');
-      el.innerHTML = `<strong>[${d.media_type}] ${d.title || ''}</strong>
-        <div>${d.body ? d.body : ''}</div>
-        <div>${d.media_path ? '<a target="_blank" class="link" href="' + (SUPABASE_URL.replace('/.co','') + '/storage/v1/object/public/' + d.media_path) + '">打开媒体 (Storage)</a>' : ''}</div><hr/>`;
-      wrap.appendChild(el);
-    });
-    tutorialsList.appendChild(wrap);
-  } catch(e){ setBusyUI(false); log('list tutorials err', e); alert('错误:' + e.message); }
+  if(!editingPatternId) return alert('请先选择或创建纸样（右侧列表 编辑 / 上传后自动成为当前编辑）');
+  await loadTutorialsForPattern(editingPatternId);
 });
 
-/* ===== Materials UI improvements (unchanged) ===== */
+/* ===== Materials UI improvements ===== */
 let matIdCounter = 0;
 function addMaterialRow(data = {}) {
   const id = `m${matIdCounter++}`;
@@ -690,26 +791,24 @@ function addMaterialRow(data = {}) {
   tr.querySelector('button.del').addEventListener('click', () => { tr.remove(); refreshMaterialIndexes(); });
 }
 function refreshMaterialIndexes(){ Array.from(materialsTbody.children).forEach((tr, idx) => { tr.children[0].textContent = (idx+1).toString(); }); }
+
+/* ensureFiveRows is now a real function so we can call it */
+function ensureFiveRows(){
+  if(materialsTbody.children.length === 0){
+    for(let i=0;i<5;i++) addMaterialRow();
+  }
+}
+
+// add default 5 rows initially (露出五行)
 addMaterialBtn.addEventListener('click', () => addMaterialRow());
-loadMaterialsBtn.addEventListener('click', async () => {
-  try {
-    initSupabase();
-    const pid = (patternIdInput.value||'').trim();
-    if(!pid) return alert('请填写 patternId');
-    setBusyUI(true, '加载材料...');
-    const { data, error } = await supabase.from('pattern_materials').select('*').eq('pattern_id', pid).order('seq', { ascending:true });
-    setBusyUI(false);
-    if(error){ log('load materials err', error); alert('加载失败:' + error.message); return; }
-    materialsTbody.innerHTML = '';
-    if(!data || data.length === 0) { addMaterialRow(); return; }
-    data.forEach(d => addMaterialRow(d));
-  } catch(e){ setBusyUI(false); log('load materials err', e); alert('错误:' + e.message); }
-});
+ensureFiveRows();
+
+// 保存材料（pattern_materials） — 仍然按 pattern_id 保存
 saveMaterialsBtn.addEventListener('click', async () => {
   try {
     initSupabase();
-    const pid = (patternIdInput.value||'').trim();
-    if(!pid) return alert('请填写 patternId');
+    if(!editingPatternId) return alert('请先选择或创建一个纸样（右侧列表 编辑 / 上传后自动成为当前编辑）');
+    const pid = editingPatternId;
     const rows = [];
     Array.from(materialsTbody.children).forEach((tr, idx) => {
       const name = tr.querySelector('input[data-key="name"]').value.trim();
@@ -725,7 +824,21 @@ saveMaterialsBtn.addEventListener('click', async () => {
     setBusyUI(false);
     if(error){ log('insert materials err', error); alert('插入失败:' + error.message); return; }
     alert('材料保存成功: ' + data.length + ' 行');
+    // after save, reload materials from server to reflect any DB defaults/ids
+    await loadMaterialsForPattern(pid);
   } catch(e){ setBusyUI(false); log('save materials err', e); alert('错误: ' + e.message); }
+});
+
+/* “从材料库里添加” —— 改为：加载该纸样已保存的 pattern_materials 并显示（替代旧的 materials_library 行为） */
+loadMaterialsBtn.addEventListener('click', async () => {
+  try {
+    if(!editingPatternId) return alert('请先选择或创建一个纸样，然后再加载该纸样已保存的材料。');
+    await loadMaterialsForPattern(editingPatternId);
+    alert('已加载该纸样的已保存材料。');
+  } catch(e){
+    log('load materials for pattern (button) err', e);
+    alert('加载已保存材料出错: ' + (e.message || e));
+  }
 });
 
 /* ===== Patterns list (compact) ===== */
@@ -763,20 +876,18 @@ function renderPatternsCompact(arr){
         </div>
       </td>
     `;
-    // edit: fill left form
-    tr.querySelector('.btn-edit').addEventListener('click', () => {
-      // populate left form
+    // edit: fill left form (no Pattern ID shown) and load materials/tutorials
+    tr.querySelector('.btn-edit').addEventListener('click', async () => {
       titleInput.value = p.title || '';
       descInput.value = p.description || '';
-      // try common app url fields fallback
-      appUrlInput.value = p.app_download_url || p.appUrl || p.app_url || p.open_url || '';
-      patternIdInput.value = p.id || '';
       editingPatternId = p.id;
-      // show save button
       savePatternChangesBtn.style.display = 'inline-block';
-      // scroll to top of left column
+      updateActionButtonsState();
       titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       log('[UI] editing pattern', p.id);
+      // load materials and tutorials for this pattern
+      await loadMaterialsForPattern(editingPatternId);
+      await loadTutorialsForPattern(editingPatternId);
     });
     // download: try immediate signed url request
     tr.querySelector('.btn-download').addEventListener('click', async () => {
@@ -796,11 +907,94 @@ function renderPatternsCompact(arr){
   });
 }
 
-/* initial housekeeping */
+/* ===== URL / magic link handling (自动处理验证链接返回：token 或 错误) =====
+   说明：
+   - Supabase 的 verify 链接会把用户引导至 auth 服务再 redirectTo 回你的页面。
+   - 回到页面时，info 可能在 location.hash（常见），也可能在 query string。
+   - 我们尝试解析 access_token/refresh_token 并用 setSession 设置会话；若有 error 则友好提示。
+*/
+function parseParamsFromHashOrSearch() {
+  const res = {};
+  const hashPart = (window.location.hash || '').replace(/^#/, '');
+  const searchPart = (window.location.search || '').replace(/^\?/, '');
+  const p = new URLSearchParams(hashPart || searchPart);
+  for (const [k, v] of p.entries()) res[k] = v;
+  return res;
+}
+
+async function tryHandleAuthFromUrl() {
+  try {
+    initSupabase();
+    const params = parseParamsFromHashOrSearch();
+    // If there is an access_token returned by Supabase (magic link flow)
+    if (params.access_token) {
+      const access_token = params.access_token;
+      const refresh_token = params.refresh_token || null;
+      try {
+        // setSession will store tokens client-side
+        const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) {
+          log('[Auth] setSession error', error);
+        } else {
+          log('[Auth] setSession success', data);
+        }
+      } catch (e) {
+        log('[Auth] setSession exception', e);
+      }
+      // 清理 URL（移除隐私敏感 token）
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+      // 更新 UI（如果取得 session）
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user) {
+        updateUserInfo(sessionData.session.user);
+        alert('已自动登录。');
+        return;
+      }
+    }
+
+    // 如果返回了 error（例如 otp_expired），提示用户
+    if (params.error) {
+      const err = params.error;
+      const desc = params.error_description ? decodeURIComponent(params.error_description) : '';
+      // 清理 URL
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      if (err === 'access_denied' && desc && desc.toLowerCase().includes('expired')) {
+        alert('验证链接已过期或无效。请返回应用重新发起注册流程。');
+      } else {
+        alert('邮箱验证/登录链接返回错误：' + (desc || err));
+      }
+      return;
+    }
+
+    // 某些配置会返回 type=signup 表示刚刚完成邮箱验证（无 token）
+    if (params.type && params.type.toLowerCase().includes('signup')) {
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+      alert('邮箱验证完成。请使用「登录」输入邮箱与密码进行登录');
+      return;
+    }
+
+    // fallback: 如果已经有 session 则更新 UI
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.user) updateUserInfo(data.session.user);
+  } catch (e) {
+    log('tryHandleAuthFromUrl exception', e);
+  }
+}
+
+/* initial housekeeping: init supabase, try handle auth from url, then subscribe */
+await initSupabase();
+await tryHandleAuthFromUrl();
 await updateUserInfoPeriodically();
 setStatus('', false);
-/* ensure at least one material row initially */
-if(materialsTbody.children.length === 0) addMaterialRow();
+
+/* initial patterns & materials state */
+if(materialsTbody.children.length === 0) ensureFiveRows();
+updateActionButtonsState();
+
 </script>
 </body>
 </html>
