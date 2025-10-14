@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>设计师登录 / 资料 — 设计师站</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{ --accent:#0f766e; --muted:#6b7280; --card:#fff; --radius:12px; --shadow:0 6px 18px rgba(15,23,42,0.06); }
+    body{ font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto; background:#f3f6fb; margin:0; color:#0b1220; }
+    .wrap{ max-width:820px; margin:32px auto; padding:18px; }
+    .card{ background:var(--card); padding:18px; border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid rgba(2,6,23,0.04); }
+    h1{ margin:0 0 8px 0; font-size:18px; }
+    label{ display:block; font-weight:600; margin-top:12px; font-size:13px; }
+    input, textarea{ width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #e6e8eb; margin-top:6px; }
+    .row{ display:flex; gap:8px; margin-top:12px; align-items:center; }
+    button{ background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600; }
+    button.ghost{ background:transparent; color:var(--accent); border:1px solid rgba(15,118,110,0.12); }
+    .muted{ color:var(--muted); font-size:13px; }
+    .small{ font-size:13px; color:#666; }
+    .avatarPreview{ width:96px; height:96px; border-radius:12px; object-fit:cover; background:#f0f2f4; display:inline-block; }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .error{ color:#c53030; margin-top:8px; }
+    .fileHint{ font-size:12px; color:var(--muted); margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>设计师站 — 登录 / 资料</h1>
+      <div id="rightTopArea" class="muted">未登录</div>
+    </div>
+
+    <!-- AUTH CARD: 仅在未登录时显示 -->
+    <div id="authCard" class="card" style="margin-bottom:12px;">
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div>
+          <div class="small muted">登录 / 注册（专用于设计师站，与 App 账号独立）</div>
+        </div>
+      </div>
+
+      <label>邮箱</label>
+      <input id="email" type="email" placeholder="designer@example.com" />
+
+      <label>密码</label>
+      <input id="password" type="password" placeholder="密码" />
+
+      <div class="row">
+        <button id="btnSignIn">登录</button>
+        <button id="btnRegister" class="ghost">注册并发送验证邮件</button>
+        <button id="btnSignOut" class="ghost" style="display:none;">登出</button>
+      </div>
+
+      <div id="authMsg" class="small muted" style="margin-top:8px;"></div>
+      <div id="authError" class="error"></div>
+    </div>
+
+    <!-- PROFILE CARD: 仅在已登录后显示 -->
+    <div id="profileCard" class="card" style="display:none;">
+      <h2 style="margin:0 0 8px 0;">设计师资料（必填项：用户名）</h2>
+      <div class="small muted">请填写你的公开资料，保存后将回到首页。</div>
+
+      <label>用户名 (必填)</label>
+      <input id="d_username" type="text" placeholder="显示名 / 用户名" />
+
+      <label>头像（上传，可选）</label>
+      <input id="d_avatar_file" type="file" accept="image/*" />
+      <div style="margin-top:8px;">
+        <img id="avatarPreview" class="avatarPreview" alt="avatar" src="" />
+        <div class="fileHint">建议 512×512，最大 5MB。</div>
+      </div>
+
+      <label>工作室 / 店铺名</label>
+      <input id="d_studio" type="text" placeholder="工作室 / 店铺名" />
+
+      <label>品牌 Logo（上传，可选）</label>
+      <input id="d_brandlogo_file" type="file" accept="image/*" />
+      <div style="margin-top:8px;">
+        <img id="brandPreview" class="avatarPreview" alt="brand logo" src="" />
+        <div class="fileHint">横向 logo 建议 600×200，最大 5MB。</div>
+      </div>
+
+      <label>店铺网址（可选）</label>
+      <input id="d_website" type="text" placeholder="https://yourshop.example" />
+
+      <div class="row" style="margin-top:12px;">
+        <button id="btnSaveProfile">保存资料并返回首页</button>
+      </div>
+
+      <div id="profileMsg" class="small muted" style="margin-top:8px;"></div>
+      <div id="profileError" class="error"></div>
+    </div>
+  </div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+/* ===== 配置：替换为你自己的 SUPABASE_URL / ANON_KEY（目前使用你提供的） ===== */
+const SUPABASE_URL = "https://fdxvtmgmmrpdkwhrbsfl.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeHZ0bWdtbXJwZGt3aHJic2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMzY0NTUsImV4cCI6MjA3NDkxMjQ1NX0.iU-T3S8OzgGSXtbIf6D7WsMAaIXKNqZE8ooScS4udEk";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===== DOM ==== */
+const authCard = document.getElementById('authCard');
+const profileCard = document.getElementById('profileCard');
+const rightTopArea = document.getElementById('rightTopArea');
+
+const emailEl = document.getElementById('email');
+const passwordEl = document.getElementById('password');
+const btnSignIn = document.getElementById('btnSignIn');
+const btnRegister = document.getElementById('btnRegister');
+const btnSignOut = document.getElementById('btnSignOut');
+const authMsg = document.getElementById('authMsg');
+const authError = document.getElementById('authError');
+
+const d_username = document.getElementById('d_username');
+const d_avatar_file = document.getElementById('d_avatar_file');
+const avatarPreview = document.getElementById('avatarPreview');
+const d_studio = document.getElementById('d_studio');
+const d_brandlogo_file = document.getElementById('d_brandlogo_file');
+const brandPreview = document.getElementById('brandPreview');
+const d_website = document.getElementById('d_website');
+const btnSaveProfile = document.getElementById('btnSaveProfile');
+const profileMsg = document.getElementById('profileMsg');
+const profileError = document.getElementById('profileError');
+
+let currentUser = null;
+let currentDesigner = null;
+
+/* ===== helpers ===== */
+function showError(el, txt){ el.textContent = txt || ''; }
+function setAuthBusy(on, text){
+  if(on) authMsg.textContent = text || '处理中...'; else authMsg.textContent = '';
+}
+function setProfileBusy(on, text){
+  profileMsg.textContent = on ? (text || '处理中...') : '';
+}
+
+/* upload file to Edge Function upload-via-server
+   returns the returned path string (as returned by your function) */
+async function uploadFileToServer(file, bucket = null){
+  if(!file) return null;
+  // basic size check: 5MB recommended for avatars/logos
+  const MAX = 6 * 1024 * 1024;
+  if(file.size > MAX) throw new Error('文件过大（建议 ≤6MB）');
+  const token = (await supabase.auth.getSession()).data?.session?.access_token;
+  const form = new FormData();
+  form.append('file', file, file.name);
+  if(bucket) form.append('bucket', bucket);
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-via-server`, {
+    method: 'POST',
+    headers: token ? { Authorization: 'Bearer ' + token } : {},
+    body: form
+  });
+  const j = await resp.json().catch(()=>({}));
+  if(!resp.ok) {
+    const msg = j?.error || j?.message || JSON.stringify(j);
+    throw new Error('上传失败: ' + msg);
+  }
+  // try to read returned path
+  const path = j.path || j.data?.path || j.url || j.public_url || j;
+  // path may be an object; convert to string if needed
+  return typeof path === 'string' ? path : JSON.stringify(path);
+}
+
+/* construct preview URL from returned path:
+   - if path looks like an absolute URL, use it
+   - else assume it's storage path and construct storage public URL
+*/
+function previewUrlFromPath(p){
+  if(!p) return '';
+  if(typeof p !== 'string') return '';
+  if(p.startsWith('http://') || p.startsWith('https://')) return p;
+  // ensure no leading slash
+  const cleaned = p.replace(/^\/+/, '');
+  // public storage URL: <SUPABASE_URL>/storage/v1/object/public/<cleaned>
+  return `${SUPABASE_URL}/storage/v1/object/public/${cleaned}`;
+}
+
+/* ===== auth handlers ===== */
+btnSignIn.addEventListener('click', async () => {
+  showError(authError, '');
+  const email = (emailEl.value||'').trim();
+  const password = (passwordEl.value||'').trim();
+  if(!email || !password) return showError(authError, '请填写邮箱和密码');
+  try {
+    setAuthBusy(true, '登录中...');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    setAuthBusy(false);
+    if(error) return showError(authError, '登录失败: ' + (error.message || JSON.stringify(error)));
+    currentUser = data?.user || null;
+    if(!currentUser) {
+      // fallback: try get session
+      const { data: s } = await supabase.auth.getSession();
+      currentUser = s?.session?.user || null;
+    }
+    if(currentUser) await afterLogin();
+  } catch(e){
+    setAuthBusy(false);
+    showError(authError, e.message || e);
+  }
+});
+
+btnRegister.addEventListener('click', async () => {
+  showError(authError, '');
+  const email = (emailEl.value||'').trim();
+  const password = (passwordEl.value||'').trim();
+  if(!email || !password) return showError(authError, '请填写邮箱和密码用于注册');
+  try {
+    setAuthBusy(true, '注册中（将发送验证邮件）...');
+    const redirectTo = window.location.origin + '/login.html';
+    const { data, error } = await supabase.auth.signUp({ email, password }, { redirectTo });
+    setAuthBusy(false);
+    if(error) return showError(authError, '注册失败: ' + (error.message || JSON.stringify(error)));
+    authMsg.textContent = '注册成功，已发送验证邮件，请完成邮箱验证后再登录。';
+  } catch(e){
+    setAuthBusy(false);
+    showError(authError, e.message || e);
+  }
+});
+
+btnSignOut.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  currentUser = null;
+  currentDesigner = null;
+  // reset UI to login state
+  authCard.style.display = '';
+  profileCard.style.display = 'none';
+  rightTopArea.textContent = '未登录';
+  btnSignOut.style.display = 'none';
+  btnSignIn.style.display = '';
+  btnRegister.style.display = '';
+  // clear sensitive fields
+  passwordEl.value = '';
+  showError(profileError, '');
+  profileMsg.textContent = '';
+});
+
+/* after login: hide auth card, show profile card, load designers record if exists */
+async function afterLogin(){
+  // get session user
+  const { data } = await supabase.auth.getSession();
+  currentUser = data?.session?.user || currentUser;
+  if(!currentUser) {
+    const { data: u2 } = await supabase.auth.getUser();
+    currentUser = u2?.user || null;
+  }
+  if(!currentUser) { showError(authError, '无法获取登录用户'); return; }
+
+  // update top-right area, swap UI
+  rightTopArea.textContent = `已登录： ${currentUser.email || currentUser.id}`;
+  authCard.style.display = 'none';
+  profileCard.style.display = '';
+  btnSignOut.style.display = '';
+  btnSignIn.style.display = 'none';
+  btnRegister.style.display = 'none';
+
+  // fetch designers record via Edge Function
+  try {
+    const token = (await supabase.auth.getSession()).data?.session?.access_token;
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/designers`, {
+      headers: { Authorization: token ? 'Bearer ' + token : '' }
+    });
+    const j = await resp.json().catch(()=>({}));
+    if(resp.ok && (j.designer || j.designers)) {
+      currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || null;
+      fillProfileForm(currentDesigner);
+      profileMsg.textContent = '已加载设计师资料，可修改后保存。';
+    } else {
+      // no designer record yet
+      currentDesigner = null;
+      fillProfileForm(null);
+      profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
+    }
+  } catch(e){
+    profileError.textContent = '读取设计师资料失败: ' + e.message;
+  }
+}
+
+/* fill profile form from designer object or clear */
+function fillProfileForm(d){
+  if(!d){
+    d_username.value = '';
+    d_studio.value = '';
+    d_website.value = '';
+    avatarPreview.src = '';
+    brandPreview.src = '';
+    // clear file inputs
+    d_avatar_file.value = '';
+    d_brandlogo_file.value = '';
+    return;
+  }
+  d_username.value = d.username || '';
+  d_studio.value = d.studio_name || '';
+  d_website.value = d.website || '';
+  d_avatar_file.value = '';
+  d_brandlogo_file.value = '';
+  // attempt to show preview from avatar_url/brand_logo_url
+  if(d.avatar_url) avatarPreview.src = d.avatar_url.startsWith('http') ? d.avatar_url : previewUrlFromPath(d.avatar_url);
+  else avatarPreview.src = '';
+  if(d.brand_logo_url) brandPreview.src = d.brand_logo_url.startsWith('http') ? d.brand_logo_url : previewUrlFromPath(d.brand_logo_url);
+  else brandPreview.src = '';
+}
+
+/* preview selected image immediately (local preview) */
+d_avatar_file.addEventListener('change', () => {
+  const f = d_avatar_file.files[0];
+  if(!f) { avatarPreview.src = currentDesigner?.avatar_url ? previewUrlFromPath(currentDesigner.avatar_url) : ''; return; }
+  const url = URL.createObjectURL(f);
+  avatarPreview.src = url;
+});
+d_brandlogo_file.addEventListener('change', () => {
+  const f = d_brandlogo_file.files[0];
+  if(!f) { brandPreview.src = currentDesigner?.brand_logo_url ? previewUrlFromPath(currentDesigner.brand_logo_url) : ''; return; }
+  const url = URL.createObjectURL(f);
+  brandPreview.src = url;
+});
+
+/* save profile: upload files first (if any), then POST/PUT to designers Edge Function */
+btnSaveProfile.addEventListener('click', async () => {
+  showError(profileError, '');
+  profileMsg.textContent = '';
+  const username = (d_username.value||'').trim();
+  if(!username) return showError(profileError, '用户名为必填项');
+
+  try {
+    setProfileBusy(true, '正在保存资料并上传图片（如有）...');
+    const token = (await supabase.auth.getSession()).data?.session?.access_token;
+
+    // prepare payload
+    const payload = {
+      username,
+      avatar_url: null,
+      studio_name: (d_studio.value||'').trim() || null,
+      brand_logo_url: null,
+      website: (d_website.value||'').trim() || null
+    };
+
+    // 1) upload avatar if a file chosen
+    if(d_avatar_file.files && d_avatar_file.files[0]) {
+      const f = d_avatar_file.files[0];
+      try {
+        const path = await uploadFileToServer(f, 'avatars');
+        payload.avatar_url = typeof path === 'string' ? path : String(path);
+      } catch(e){
+        throw new Error('头像上传失败: ' + e.message);
+      }
+    } else if(currentDesigner?.avatar_url) {
+      payload.avatar_url = currentDesigner.avatar_url;
+    }
+
+    // 2) upload brand logo if file chosen
+    if(d_brandlogo_file.files && d_brandlogo_file.files[0]) {
+      const f = d_brandlogo_file.files[0];
+      try {
+        const path = await uploadFileToServer(f, 'brand_logos');
+        payload.brand_logo_url = typeof path === 'string' ? path : String(path);
+      } catch(e){
+        throw new Error('品牌 Logo 上传失败: ' + e.message);
+      }
+    } else if(currentDesigner?.brand_logo_url) {
+      payload.brand_logo_url = currentDesigner.brand_logo_url;
+    }
+
+    // 3) call designers Edge Function to create or update
+    const method = currentDesigner ? 'PUT' : 'POST';
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/designers`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? 'Bearer ' + token : ''
+      },
+      body: JSON.stringify(payload)
+    });
+    const j = await resp.json().catch(()=>({}));
+    if(!resp.ok){
+      const em = j?.error || j?.message || JSON.stringify(j);
+      throw new Error('保存失败: ' + em);
+    }
+    // update local state
+    currentDesigner = j.designer || j.designers || currentDesigner || payload;
+    profileMsg.textContent = '保存成功，正在跳转到首页...';
+    setTimeout(()=> window.location.href = 'index.html', 800);
+  } catch(e){
+    showError(profileError, e.message || e);
+  } finally {
+    setProfileBusy(false);
+  }
+});
+
+/* initial: check session and handle magic link if present */
+async function parseParamsFromHashOrSearch() {
+  const res = {};
+  const hashPart = (window.location.hash || '').replace(/^#/, '');
+  const searchPart = (window.location.search || '').replace(/^\?/, '');
+  const p = new URLSearchParams(hashPart || searchPart);
+  for (const [k, v] of p.entries()) res[k] = v;
+  return res;
+}
+
+async function tryHandleAuthFromUrl() {
+  try {
+    const params = await parseParamsFromHashOrSearch();
+    if (params.access_token) {
+      const access_token = params.access_token;
+      const refresh_token = params.refresh_token || null;
+      try {
+        const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) console.warn('[Auth] setSession error', error);
+      } catch (e) { console.warn(e); }
+      // 清理 URL
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+    // if error param present show message
+    if (params.error) {
+      const desc = params.error_description ? decodeURIComponent(params.error_description) : params.error;
+      authMsg.textContent = '验证链接返回：' + desc;
+      // clean url
+      const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  } catch(e){ console.warn('tryHandleAuthFromUrl exception', e); }
+}
+
+/* startup */
+(async function init(){
+  await tryHandleAuthFromUrl();
+  // subscribe auth state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    if(session?.access_token) afterLogin(); else {
+      // signed out
+      currentUser = null;
+      currentDesigner = null;
+      authCard.style.display = '';
+      profileCard.style.display = 'none';
+      rightTopArea.textContent = '未登录';
+      btnSignOut.style.display = 'none';
+      btnSignIn.style.display = '';
+      btnRegister.style.display = '';
+    }
+  });
+  // check existing session
+  const { data } = await supabase.auth.getSession();
+  if(data?.session?.user) {
+    currentUser = data.session.user;
+    await afterLogin();
+  } else {
+    // show auth
+    authCard.style.display = '';
+    profileCard.style.display = 'none';
+    btnSignOut.style.display = 'none';
+    rightTopArea.textContent = '未登录';
+  }
+})();
+</script>
+</body>
+</html>
