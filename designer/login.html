@@ -21,6 +21,7 @@
     .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
     .error{ color:#c53030; margin-top:8px; }
     .fileHint{ font-size:12px; color:var(--muted); margin-top:6px; }
+    a.link{ color:var(--accent); text-decoration:none; }
   </style>
 </head>
 <body>
@@ -47,6 +48,7 @@
       <div class="row">
         <button id="btnSignIn">登录</button>
         <button id="btnRegister" class="ghost">注册并发送验证邮件</button>
+        <button id="btnForgotPassword" class="ghost">忘记密码</button>
         <button id="btnSignOut" class="ghost" style="display:none;">登出</button>
       </div>
 
@@ -54,9 +56,9 @@
       <div id="authError" class="error"></div>
     </div>
 
-    <!-- PROFILE CARD: 仅在已登录后显示 -->
+    <!-- PROFILE CARD: 仅在已登录后且尚未填写设计师资料时显示 -->
     <div id="profileCard" class="card" style="display:none;">
-      <h2 style="margin:0 0 8px 0;">设计师资料（必填项：用户名）</h2>
+      <h2 style="margin:0 0 8px 0;">设计师资料</h2>
       <div class="small muted">请填写你的公开资料，保存后将回到首页。</div>
 
       <label>用户名 (必填)</label>
@@ -109,6 +111,7 @@ const emailEl = document.getElementById('email');
 const passwordEl = document.getElementById('password');
 const btnSignIn = document.getElementById('btnSignIn');
 const btnRegister = document.getElementById('btnRegister');
+const btnForgotPassword = document.getElementById('btnForgotPassword');
 const btnSignOut = document.getElementById('btnSignOut');
 const authMsg = document.getElementById('authMsg');
 const authError = document.getElementById('authError');
@@ -140,7 +143,6 @@ function setProfileBusy(on, text){
    returns the returned path string (as returned by your function) */
 async function uploadFileToServer(file, bucket = null){
   if(!file) return null;
-  // basic size check: 5MB recommended for avatars/logos
   const MAX = 6 * 1024 * 1024;
   if(file.size > MAX) throw new Error('文件过大（建议 ≤6MB）');
   const token = (await supabase.auth.getSession()).data?.session?.access_token;
@@ -157,23 +159,16 @@ async function uploadFileToServer(file, bucket = null){
     const msg = j?.error || j?.message || JSON.stringify(j);
     throw new Error('上传失败: ' + msg);
   }
-  // try to read returned path
   const path = j.path || j.data?.path || j.url || j.public_url || j;
-  // path may be an object; convert to string if needed
   return typeof path === 'string' ? path : JSON.stringify(path);
 }
 
-/* construct preview URL from returned path:
-   - if path looks like an absolute URL, use it
-   - else assume it's storage path and construct storage public URL
-*/
+/* construct preview URL from returned path */
 function previewUrlFromPath(p){
   if(!p) return '';
   if(typeof p !== 'string') return '';
   if(p.startsWith('http://') || p.startsWith('https://')) return p;
-  // ensure no leading slash
   const cleaned = p.replace(/^\/+/, '');
-  // public storage URL: <SUPABASE_URL>/storage/v1/object/public/<cleaned>
   return `${SUPABASE_URL}/storage/v1/object/public/${cleaned}`;
 }
 
@@ -190,7 +185,6 @@ btnSignIn.addEventListener('click', async () => {
     if(error) return showError(authError, '登录失败: ' + (error.message || JSON.stringify(error)));
     currentUser = data?.user || null;
     if(!currentUser) {
-      // fallback: try get session
       const { data: s } = await supabase.auth.getSession();
       currentUser = s?.session?.user || null;
     }
@@ -201,6 +195,7 @@ btnSignIn.addEventListener('click', async () => {
   }
 });
 
+/* 注册（发送验证邮件） */
 btnRegister.addEventListener('click', async () => {
   showError(authError, '');
   const email = (emailEl.value||'').trim();
@@ -208,11 +203,32 @@ btnRegister.addEventListener('click', async () => {
   if(!email || !password) return showError(authError, '请填写邮箱和密码用于注册');
   try {
     setAuthBusy(true, '注册中（将发送验证邮件）...');
-    const redirectTo = window.location.origin + '/designer/login.html';
+    // redirectTo 可以指向本页面，让用户点击邮件回到这里（setSession 会自动处理）
+    const redirectTo = window.location.origin + window.location.pathname;
     const { data, error } = await supabase.auth.signUp({ email, password }, { redirectTo });
     setAuthBusy(false);
     if(error) return showError(authError, '注册失败: ' + (error.message || JSON.stringify(error)));
     authMsg.textContent = '注册成功，已发送验证邮件，请完成邮箱验证后再登录。';
+  } catch(e){
+    setAuthBusy(false);
+    showError(authError, e.message || e);
+  }
+});
+
+/* 忘记密码：发送重设密码邮件 */
+btnForgotPassword.addEventListener('click', async () => {
+  showError(authError, '');
+  const email = (emailEl.value||'').trim();
+  if(!email) return showError(authError, '请先填写你的注册邮箱');
+  try {
+    setAuthBusy(true, '发送重置密码邮件...');
+    // redirectTo 指向密码重置后回跳的页面（可改为专用页面）
+    const redirectTo = window.location.origin + window.location.pathname;
+    // supabase-js v2 常用方法：resetPasswordForEmail(email, { redirectTo })
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    setAuthBusy(false);
+    if(error) return showError(authError, '发送失败: ' + (error.message || JSON.stringify(error)));
+    authMsg.textContent = '已发送密码重置邮件，请检查你的邮箱（可能在垃圾箱）。';
   } catch(e){
     setAuthBusy(false);
     showError(authError, e.message || e);
@@ -236,9 +252,12 @@ btnSignOut.addEventListener('click', async () => {
   profileMsg.textContent = '';
 });
 
-/* after login: hide auth card, show profile card, load designers record if exists */
+/* after login: fetch designers via Edge Function.
+   If a designers record exists -> redirect to index.html (首页)
+   If not -> show profileCard for filling in data.
+*/
 async function afterLogin(){
-  // get session user
+  // ensure we have currentUser
   const { data } = await supabase.auth.getSession();
   currentUser = data?.session?.user || currentUser;
   if(!currentUser) {
@@ -247,33 +266,45 @@ async function afterLogin(){
   }
   if(!currentUser) { showError(authError, '无法获取登录用户'); return; }
 
-  // update top-right area, swap UI
+  // update UI states
   rightTopArea.textContent = `已登录： ${currentUser.email || currentUser.id}`;
   authCard.style.display = 'none';
-  profileCard.style.display = '';
   btnSignOut.style.display = '';
-  btnSignIn.style.display = 'none';
-  btnRegister.style.display = 'none';
 
-  // fetch designers record via Edge Function
+  // call designers Edge Function to check if record exists
   try {
     const token = (await supabase.auth.getSession()).data?.session?.access_token;
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/designers`, {
       headers: { Authorization: token ? 'Bearer ' + token : '' }
     });
     const j = await resp.json().catch(()=>({}));
-    if(resp.ok && (j.designer || j.designers)) {
-      currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || null;
-      fillProfileForm(currentDesigner);
-      profileMsg.textContent = '已加载设计师资料，可修改后保存。';
-    } else {
-      // no designer record yet
+    if(resp.ok && (j.designer || (Array.isArray(j.designers) && j.designers.length > 0))) {
+      // designer record exists -> redirect to index (首页)
+      // Note: if you want designers to be able to edit profile from here,
+      // provide a separate "编辑资料" link in your app to go back to this page.
+      window.location.href = 'index.html';
+      return;
+    } else if (resp.ok && j && Object.keys(j).length === 0) {
+      // 200 but empty -> treat as no designer
       currentDesigner = null;
       fillProfileForm(null);
       profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
+      profileCard.style.display = '';
+      return;
+    } else {
+      // not ok (404 or other) or no designer -> show profile card
+      currentDesigner = null;
+      fillProfileForm(null);
+      profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
+      profileCard.style.display = '';
+      return;
     }
   } catch(e){
-    profileError.textContent = '读取设计师资料失败: ' + e.message;
+    // on error (network/CORS) show profile card with error note (so user can still fill)
+    profileError.textContent = '读取设计师资料失败: ' + (e.message || e);
+    currentDesigner = null;
+    fillProfileForm(null);
+    profileCard.style.display = '';
   }
 }
 
@@ -285,7 +316,6 @@ function fillProfileForm(d){
     d_website.value = '';
     avatarPreview.src = '';
     brandPreview.src = '';
-    // clear file inputs
     d_avatar_file.value = '';
     d_brandlogo_file.value = '';
     return;
@@ -295,7 +325,6 @@ function fillProfileForm(d){
   d_website.value = d.website || '';
   d_avatar_file.value = '';
   d_brandlogo_file.value = '';
-  // attempt to show preview from avatar_url/brand_logo_url
   if(d.avatar_url) avatarPreview.src = d.avatar_url.startsWith('http') ? d.avatar_url : previewUrlFromPath(d.avatar_url);
   else avatarPreview.src = '';
   if(d.brand_logo_url) brandPreview.src = d.brand_logo_url.startsWith('http') ? d.brand_logo_url : previewUrlFromPath(d.brand_logo_url);
@@ -336,7 +365,7 @@ btnSaveProfile.addEventListener('click', async () => {
       website: (d_website.value||'').trim() || null
     };
 
-    // 1) upload avatar if a file chosen
+    // 1) upload avatar if chosen
     if(d_avatar_file.files && d_avatar_file.files[0]) {
       const f = d_avatar_file.files[0];
       try {
@@ -349,7 +378,7 @@ btnSaveProfile.addEventListener('click', async () => {
       payload.avatar_url = currentDesigner.avatar_url;
     }
 
-    // 2) upload brand logo if file chosen
+    // 2) brand logo
     if(d_brandlogo_file.files && d_brandlogo_file.files[0]) {
       const f = d_brandlogo_file.files[0];
       try {
@@ -378,9 +407,9 @@ btnSaveProfile.addEventListener('click', async () => {
       throw new Error('保存失败: ' + em);
     }
     // update local state
-    currentDesigner = j.designer || j.designers || currentDesigner || payload;
+    currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || currentDesigner || payload;
     profileMsg.textContent = '保存成功，正在跳转到首页...';
-    setTimeout(()=> window.location.href = 'index.html', 800);
+    setTimeout(()=> window.location.href = 'index.html', 600);
   } catch(e){
     showError(profileError, e.message || e);
   } finally {
@@ -388,7 +417,7 @@ btnSaveProfile.addEventListener('click', async () => {
   }
 });
 
-/* initial: check session and handle magic link if present */
+/* initial: handle magic-link / token in URL then hydrate auth state */
 async function parseParamsFromHashOrSearch() {
   const res = {};
   const hashPart = (window.location.hash || '').replace(/^#/, '');
@@ -408,15 +437,13 @@ async function tryHandleAuthFromUrl() {
         const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
         if (error) console.warn('[Auth] setSession error', error);
       } catch (e) { console.warn(e); }
-      // 清理 URL
+      // 清理 URL（移除 token）
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
     }
-    // if error param present show message
     if (params.error) {
       const desc = params.error_description ? decodeURIComponent(params.error_description) : params.error;
       authMsg.textContent = '验证链接返回：' + desc;
-      // clean url
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -426,10 +453,14 @@ async function tryHandleAuthFromUrl() {
 /* startup */
 (async function init(){
   await tryHandleAuthFromUrl();
+
   // subscribe auth state changes
   supabase.auth.onAuthStateChange((event, session) => {
-    if(session?.access_token) afterLogin(); else {
-      // signed out
+    if(session?.access_token) {
+      // signed in -> try afterLogin which will determine redirect or show profile form
+      afterLogin();
+    } else {
+      // signed out -> reset UI
       currentUser = null;
       currentDesigner = null;
       authCard.style.display = '';
@@ -440,13 +471,14 @@ async function tryHandleAuthFromUrl() {
       btnRegister.style.display = '';
     }
   });
+
   // check existing session
   const { data } = await supabase.auth.getSession();
   if(data?.session?.user) {
     currentUser = data.session.user;
     await afterLogin();
   } else {
-    // show auth
+    // show login
     authCard.style.display = '';
     profileCard.style.display = 'none';
     btnSignOut.style.display = 'none';
