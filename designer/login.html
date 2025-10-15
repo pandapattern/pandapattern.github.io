@@ -188,6 +188,12 @@ const resetError = document.getElementById('resetError');
 let currentUser = null;
 let currentDesigner = null;
 
+/* ===== recovery flag =====
+   当用户从邮件点击回来用于重置密码时（type=recovery），
+   我们设置 recoveryFlow = true，避免 afterLogin() 自动跳转到首页。
+*/
+let recoveryFlow = false;
+
 /* ===== helpers ===== */
 function showError(el, txt){ el.textContent = txt || ''; }
 function setAuthBusy(on, text){
@@ -263,7 +269,6 @@ forgotSendBtn.addEventListener('click', async () => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo });
     forgotMsg.textContent = '';
     if(error) {
-      // 注意：出于隐私/安全考虑，Supabase 可能不会在客户端泄露邮箱存在与否的细节
       return showError(forgotError, '发送失败: ' + (error.message || JSON.stringify(error)));
     }
     forgotMsg.textContent = '已发送重置邮件（若该邮箱存在，请查收）。';
@@ -291,8 +296,27 @@ btnSignOut.addEventListener('click', async () => {
 /* after login: fetch designers via Edge Function.
    If a designers record exists -> redirect to index.html (首页)
    If not -> show profileCard for filling in data.
+
+   IMPORTANT: if recoveryFlow === true, DO NOT redirect; instead show reset modal
 */
 async function afterLogin(){
+  // if recovery flow, do not auto-redirect; show reset modal for user to set password
+  if(recoveryFlow){
+    // ensure UI reflects signed-in state but do not query designers/redirect
+    const { data } = await supabase.auth.getSession();
+    currentUser = data?.session?.user || currentUser;
+    rightTopArea.textContent = `已登录： ${currentUser?.email || currentUser?.id || ''}`;
+    authCard.style.display = 'none';
+    btnSignOut.style.display = '';
+    // show reset modal (if not already shown)
+    resetError.textContent = '';
+    resetMsg.textContent = '';
+    newPassword.value = '';
+    confirmPassword.value = '';
+    resetModal.style.display = 'block';
+    return;
+  }
+
   const { data } = await supabase.auth.getSession();
   currentUser = data?.session?.user || currentUser;
   if(!currentUser) {
@@ -474,15 +498,19 @@ async function tryHandleAuthFromUrl() {
     const params = await parseParamsFromHashOrSearch();
     const isRecovery = params.type === 'recovery' || params['type'] === 'recovery';
     if (params.access_token) {
+      // mark recovery flow BEFORE setSession so afterLogin can detect it
+      recoveryFlow = isRecovery === true;
+
       const access_token = params.access_token;
       const refresh_token = params.refresh_token || null;
       try {
         const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
         if (error) console.warn('[Auth] setSession error', error);
       } catch (e) { console.warn(e); }
-      // show reset modal if recovery flow
+
+      // If recovery, show reset modal (we still keep session so updateUser works)
       if (isRecovery) {
-        // give time to set session
+        // give auth a moment to settle then show modal
         setTimeout(()=> {
           resetError.textContent = '';
           resetMsg.textContent = '';
@@ -492,9 +520,9 @@ async function tryHandleAuthFromUrl() {
         }, 300);
       } else {
         // normal magic link sign-in: continue to app logic
-        // delay to let auth state subscription handle it
         setTimeout(()=> afterLogin(), 300);
       }
+
       // clean up url to remove tokens
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
@@ -511,6 +539,7 @@ async function tryHandleAuthFromUrl() {
 /* reset modal handlers */
 resetCancelBtn.addEventListener('click', () => {
   resetModal.style.display = 'none';
+  recoveryFlow = false;
   // optionally sign out to clear session
   supabase.auth.signOut();
 });
@@ -531,8 +560,9 @@ resetSubmitBtn.addEventListener('click', async () => {
       return showError(resetError, '设置失败: ' + (error.message || JSON.stringify(error)));
     }
     resetMsg.textContent = '密码已重设成功，请使用新密码重新登录。';
-    // sign out after short delay, return to login UI
+    // sign out after short delay, clear recovery flag, return to login UI
     setTimeout(async () => {
+      recoveryFlow = false;
       await supabase.auth.signOut();
       resetModal.style.display = 'none';
       authCard.style.display = '';
