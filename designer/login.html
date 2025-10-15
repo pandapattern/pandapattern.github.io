@@ -34,7 +34,7 @@
     <div id="authCard" class="card" style="margin-bottom:12px;">
       <div style="display:flex; gap:12px; align-items:center;">
         <div>
-          <div class="small muted">登录 / 注册（专用于设计师站，与 App 账号独立）</div>
+          <div class="small muted">登录 / 注册</div>
         </div>
       </div>
 
@@ -208,7 +208,7 @@ btnRegister.addEventListener('click', async () => {
   if(!email || !password) return showError(authError, '请填写邮箱和密码用于注册');
   try {
     setAuthBusy(true, '注册中（将发送验证邮件）...');
-    const redirectTo = window.location.origin + '/login.html';
+    const redirectTo = window.location.origin + '/designer/login.html';
     const { data, error } = await supabase.auth.signUp({ email, password }, { redirectTo });
     setAuthBusy(false);
     if(error) return showError(authError, '注册失败: ' + (error.message || JSON.stringify(error)));
