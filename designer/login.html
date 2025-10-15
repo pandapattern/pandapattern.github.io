@@ -22,12 +22,17 @@
     .error{ color:#c53030; margin-top:8px; }
     .fileHint{ font-size:12px; color:var(--muted); margin-top:6px; }
     a.link{ color:var(--accent); text-decoration:none; }
+    /* modal */
+    .modal-backdrop{ position:fixed; left:0;top:0; right:0; bottom:0; background:rgba(2,6,23,0.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
+    .modal{ background:#fff; border-radius:10px; padding:16px; width:420px; box-shadow:0 12px 36px rgba(2,6,23,0.32); }
+    .modal h3{ margin:0 0 8px 0; font-size:16px; }
+    .muted-sm{ color:var(--muted); font-size:13px; margin-top:6px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <h1>设计师站 — 登录 / 资料</h1>
+      <h1>设计师站 — 登录</h1>
       <div id="rightTopArea" class="muted">未登录</div>
     </div>
 
@@ -93,16 +98,54 @@
     </div>
   </div>
 
+  <!-- Forgot Password Modal -->
+  <div id="forgotModal" style="display:none;">
+    <div class="modal-backdrop" id="forgotBackdrop">
+      <div class="modal">
+        <h3>重置密码 — 发送邮件</h3>
+        <div class="muted-sm">请输入注册时使用的邮箱。系统将向该邮箱发送重置链接。</div>
+        <label style="margin-top:12px">邮箱</label>
+        <input id="forgotEmail" type="email" placeholder="designer@example.com" />
+        <div class="row" style="margin-top:12px;">
+          <button id="forgotSendBtn">发送重置邮件</button>
+          <button id="forgotCancelBtn" class="ghost">取消</button>
+        </div>
+        <div id="forgotMsg" class="muted-sm" style="margin-top:8px;"></div>
+        <div id="forgotError" class="error"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password (after clicking email link) Modal -->
+  <div id="resetModal" style="display:none;">
+    <div class="modal-backdrop" id="resetBackdrop">
+      <div class="modal">
+        <h3>设置新密码</h3>
+        <div class="muted-sm">请在下面输入并确认新密码（密码将直接更新到你的账号）。</div>
+        <label style="margin-top:12px">新密码</label>
+        <input id="newPassword" type="password" placeholder="新密码" />
+        <label style="margin-top:8px">确认新密码</label>
+        <input id="confirmPassword" type="password" placeholder="再次输入新密码" />
+        <div class="row" style="margin-top:12px;">
+          <button id="resetSubmitBtn">设置新密码</button>
+          <button id="resetCancelBtn" class="ghost">取消</button>
+        </div>
+        <div id="resetMsg" class="muted-sm" style="margin-top:8px;"></div>
+        <div id="resetError" class="error"></div>
+      </div>
+    </div>
+  </div>
+
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* ===== 配置：替换为你自己的 SUPABASE_URL / ANON_KEY（目前使用你提供的） ===== */
+/* ===== 配置 ===== */
 const SUPABASE_URL = "https://fdxvtmgmmrpdkwhrbsfl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeHZ0bWdtbXJwZGt3aHJic2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMzY0NTUsImV4cCI6MjA3NDkxMjQ1NX0.iU-T3S8OzgGSXtbIf6D7WsMAaIXKNqZE8ooScS4udEk";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ===== DOM ==== */
+/* ===== DOM ===== */
 const authCard = document.getElementById('authCard');
 const profileCard = document.getElementById('profileCard');
 const rightTopArea = document.getElementById('rightTopArea');
@@ -127,50 +170,33 @@ const btnSaveProfile = document.getElementById('btnSaveProfile');
 const profileMsg = document.getElementById('profileMsg');
 const profileError = document.getElementById('profileError');
 
+const forgotModal = document.getElementById('forgotModal');
+const forgotEmail = document.getElementById('forgotEmail');
+const forgotSendBtn = document.getElementById('forgotSendBtn');
+const forgotCancelBtn = document.getElementById('forgotCancelBtn');
+const forgotMsg = document.getElementById('forgotMsg');
+const forgotError = document.getElementById('forgotError');
+
+const resetModal = document.getElementById('resetModal');
+const newPassword = document.getElementById('newPassword');
+const confirmPassword = document.getElementById('confirmPassword');
+const resetSubmitBtn = document.getElementById('resetSubmitBtn');
+const resetCancelBtn = document.getElementById('resetCancelBtn');
+const resetMsg = document.getElementById('resetMsg');
+const resetError = document.getElementById('resetError');
+
 let currentUser = null;
 let currentDesigner = null;
 
 /* ===== helpers ===== */
 function showError(el, txt){ el.textContent = txt || ''; }
 function setAuthBusy(on, text){
-  if(on) authMsg.textContent = text || '处理中...'; else authMsg.textContent = '';
+  authMsg.textContent = on ? (text || '处理中...') : '';
 }
 function setProfileBusy(on, text){
   profileMsg.textContent = on ? (text || '处理中...') : '';
 }
-
-/* upload file to Edge Function upload-via-server
-   returns the returned path string (as returned by your function) */
-async function uploadFileToServer(file, bucket = null){
-  if(!file) return null;
-  const MAX = 6 * 1024 * 1024;
-  if(file.size > MAX) throw new Error('文件过大（建议 ≤6MB）');
-  const token = (await supabase.auth.getSession()).data?.session?.access_token;
-  const form = new FormData();
-  form.append('file', file, file.name);
-  if(bucket) form.append('bucket', bucket);
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-via-server`, {
-    method: 'POST',
-    headers: token ? { Authorization: 'Bearer ' + token } : {},
-    body: form
-  });
-  const j = await resp.json().catch(()=>({}));
-  if(!resp.ok) {
-    const msg = j?.error || j?.message || JSON.stringify(j);
-    throw new Error('上传失败: ' + msg);
-  }
-  const path = j.path || j.data?.path || j.url || j.public_url || j;
-  return typeof path === 'string' ? path : JSON.stringify(path);
-}
-
-/* construct preview URL from returned path */
-function previewUrlFromPath(p){
-  if(!p) return '';
-  if(typeof p !== 'string') return '';
-  if(p.startsWith('http://') || p.startsWith('https://')) return p;
-  const cleaned = p.replace(/^\/+/, '');
-  return `${SUPABASE_URL}/storage/v1/object/public/${cleaned}`;
-}
+function isValidEmail(e){ return /\S+@\S+\.\S+/.test(String(e||'').trim()); }
 
 /* ===== auth handlers ===== */
 btnSignIn.addEventListener('click', async () => {
@@ -203,7 +229,6 @@ btnRegister.addEventListener('click', async () => {
   if(!email || !password) return showError(authError, '请填写邮箱和密码用于注册');
   try {
     setAuthBusy(true, '注册中（将发送验证邮件）...');
-    // redirectTo 可以指向本页面，让用户点击邮件回到这里（setSession 会自动处理）
     const redirectTo = window.location.origin + window.location.pathname;
     const { data, error } = await supabase.auth.signUp({ email, password }, { redirectTo });
     setAuthBusy(false);
@@ -215,38 +240,49 @@ btnRegister.addEventListener('click', async () => {
   }
 });
 
-/* 忘记密码：发送重设密码邮件 */
-btnForgotPassword.addEventListener('click', async () => {
-  showError(authError, '');
-  const email = (emailEl.value||'').trim();
-  if(!email) return showError(authError, '请先填写你的注册邮箱');
+/* 打开忘记密码弹框 */
+btnForgotPassword.addEventListener('click', () => {
+  forgotEmail.value = emailEl.value || '';
+  forgotMsg.textContent = '';
+  forgotError.textContent = '';
+  forgotModal.style.display = 'block';
+});
+
+/* 取消忘记密码弹框 */
+forgotCancelBtn.addEventListener('click', () => { forgotModal.style.display = 'none'; });
+
+/* 发送忘记密码邮件 */
+forgotSendBtn.addEventListener('click', async () => {
+  forgotError.textContent = '';
+  forgotMsg.textContent = '';
+  const em = (forgotEmail.value||'').trim();
+  if(!isValidEmail(em)) return showError(forgotError, '请填写有效邮箱');
   try {
-    setAuthBusy(true, '发送重置密码邮件...');
-    // redirectTo 指向密码重置后回跳的页面（可改为专用页面）
-    const redirectTo = window.location.origin + window.location.pathname;
-    // supabase-js v2 常用方法：resetPasswordForEmail(email, { redirectTo })
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    setAuthBusy(false);
-    if(error) return showError(authError, '发送失败: ' + (error.message || JSON.stringify(error)));
-    authMsg.textContent = '已发送密码重置邮件，请检查你的邮箱（可能在垃圾箱）。';
+    forgotMsg.textContent = '正在发送重置邮件...';
+    const redirectTo = window.location.origin + window.location.pathname; // 点击邮件回到本页
+    const { data, error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo });
+    forgotMsg.textContent = '';
+    if(error) {
+      // 注意：出于隐私/安全考虑，Supabase 可能不会在客户端泄露邮箱存在与否的细节
+      return showError(forgotError, '发送失败: ' + (error.message || JSON.stringify(error)));
+    }
+    forgotMsg.textContent = '已发送重置邮件（若该邮箱存在，请查收）。';
   } catch(e){
-    setAuthBusy(false);
-    showError(authError, e.message || e);
+    showError(forgotError, e.message || e);
   }
 });
 
+/* 注销 */
 btnSignOut.addEventListener('click', async () => {
   await supabase.auth.signOut();
   currentUser = null;
   currentDesigner = null;
-  // reset UI to login state
   authCard.style.display = '';
   profileCard.style.display = 'none';
   rightTopArea.textContent = '未登录';
   btnSignOut.style.display = 'none';
   btnSignIn.style.display = '';
   btnRegister.style.display = '';
-  // clear sensitive fields
   passwordEl.value = '';
   showError(profileError, '');
   profileMsg.textContent = '';
@@ -257,7 +293,6 @@ btnSignOut.addEventListener('click', async () => {
    If not -> show profileCard for filling in data.
 */
 async function afterLogin(){
-  // ensure we have currentUser
   const { data } = await supabase.auth.getSession();
   currentUser = data?.session?.user || currentUser;
   if(!currentUser) {
@@ -266,12 +301,10 @@ async function afterLogin(){
   }
   if(!currentUser) { showError(authError, '无法获取登录用户'); return; }
 
-  // update UI states
   rightTopArea.textContent = `已登录： ${currentUser.email || currentUser.id}`;
   authCard.style.display = 'none';
   btnSignOut.style.display = '';
 
-  // call designers Edge Function to check if record exists
   try {
     const token = (await supabase.auth.getSession()).data?.session?.access_token;
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/designers`, {
@@ -279,20 +312,11 @@ async function afterLogin(){
     });
     const j = await resp.json().catch(()=>({}));
     if(resp.ok && (j.designer || (Array.isArray(j.designers) && j.designers.length > 0))) {
-      // designer record exists -> redirect to index (首页)
-      // Note: if you want designers to be able to edit profile from here,
-      // provide a separate "编辑资料" link in your app to go back to this page.
+      // 有设计师记录 -> 直接去首页
       window.location.href = 'index.html';
       return;
-    } else if (resp.ok && j && Object.keys(j).length === 0) {
-      // 200 but empty -> treat as no designer
-      currentDesigner = null;
-      fillProfileForm(null);
-      profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
-      profileCard.style.display = '';
-      return;
     } else {
-      // not ok (404 or other) or no designer -> show profile card
+      // 没有 -> 显示并填写资料
       currentDesigner = null;
       fillProfileForm(null);
       profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
@@ -300,7 +324,7 @@ async function afterLogin(){
       return;
     }
   } catch(e){
-    // on error (network/CORS) show profile card with error note (so user can still fill)
+    // 网络/权限问题仍允许用户填写资料
     profileError.textContent = '读取设计师资料失败: ' + (e.message || e);
     currentDesigner = null;
     fillProfileForm(null);
@@ -308,7 +332,7 @@ async function afterLogin(){
   }
 }
 
-/* fill profile form from designer object or clear */
+/* fill profile form */
 function fillProfileForm(d){
   if(!d){
     d_username.value = '';
@@ -331,21 +355,17 @@ function fillProfileForm(d){
   else brandPreview.src = '';
 }
 
-/* preview selected image immediately (local preview) */
+/* preview images */
 d_avatar_file.addEventListener('change', () => {
   const f = d_avatar_file.files[0];
-  if(!f) { avatarPreview.src = currentDesigner?.avatar_url ? previewUrlFromPath(currentDesigner.avatar_url) : ''; return; }
-  const url = URL.createObjectURL(f);
-  avatarPreview.src = url;
+  avatarPreview.src = f ? URL.createObjectURL(f) : (currentDesigner?.avatar_url ? previewUrlFromPath(currentDesigner.avatar_url) : '');
 });
 d_brandlogo_file.addEventListener('change', () => {
   const f = d_brandlogo_file.files[0];
-  if(!f) { brandPreview.src = currentDesigner?.brand_logo_url ? previewUrlFromPath(currentDesigner.brand_logo_url) : ''; return; }
-  const url = URL.createObjectURL(f);
-  brandPreview.src = url;
+  brandPreview.src = f ? URL.createObjectURL(f) : (currentDesigner?.brand_logo_url ? previewUrlFromPath(currentDesigner.brand_logo_url) : '');
 });
 
-/* save profile: upload files first (if any), then POST/PUT to designers Edge Function */
+/* save profile */
 btnSaveProfile.addEventListener('click', async () => {
   showError(profileError, '');
   profileMsg.textContent = '';
@@ -356,7 +376,6 @@ btnSaveProfile.addEventListener('click', async () => {
     setProfileBusy(true, '正在保存资料并上传图片（如有）...');
     const token = (await supabase.auth.getSession()).data?.session?.access_token;
 
-    // prepare payload
     const payload = {
       username,
       avatar_url: null,
@@ -365,33 +384,22 @@ btnSaveProfile.addEventListener('click', async () => {
       website: (d_website.value||'').trim() || null
     };
 
-    // 1) upload avatar if chosen
+    // upload avatar/logo via your upload-via-server function
     if(d_avatar_file.files && d_avatar_file.files[0]) {
       const f = d_avatar_file.files[0];
-      try {
-        const path = await uploadFileToServer(f, 'avatars');
-        payload.avatar_url = typeof path === 'string' ? path : String(path);
-      } catch(e){
-        throw new Error('头像上传失败: ' + e.message);
-      }
+      const path = await uploadFileToServer(f, 'avatars');
+      payload.avatar_url = typeof path === 'string' ? path : String(path);
     } else if(currentDesigner?.avatar_url) {
       payload.avatar_url = currentDesigner.avatar_url;
     }
-
-    // 2) brand logo
     if(d_brandlogo_file.files && d_brandlogo_file.files[0]) {
       const f = d_brandlogo_file.files[0];
-      try {
-        const path = await uploadFileToServer(f, 'brand_logos');
-        payload.brand_logo_url = typeof path === 'string' ? path : String(path);
-      } catch(e){
-        throw new Error('品牌 Logo 上传失败: ' + e.message);
-      }
+      const path = await uploadFileToServer(f, 'brand_logos');
+      payload.brand_logo_url = typeof path === 'string' ? path : String(path);
     } else if(currentDesigner?.brand_logo_url) {
       payload.brand_logo_url = currentDesigner.brand_logo_url;
     }
 
-    // 3) call designers Edge Function to create or update
     const method = currentDesigner ? 'PUT' : 'POST';
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/designers`, {
       method,
@@ -406,10 +414,9 @@ btnSaveProfile.addEventListener('click', async () => {
       const em = j?.error || j?.message || JSON.stringify(j);
       throw new Error('保存失败: ' + em);
     }
-    // update local state
     currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || currentDesigner || payload;
     profileMsg.textContent = '保存成功，正在跳转到首页...';
-    setTimeout(()=> window.location.href = 'index.html', 600);
+    setTimeout(()=> window.location.href = 'index.html', 800);
   } catch(e){
     showError(profileError, e.message || e);
   } finally {
@@ -417,7 +424,43 @@ btnSaveProfile.addEventListener('click', async () => {
   }
 });
 
-/* initial: handle magic-link / token in URL then hydrate auth state */
+/* upload file to Edge Function upload-via-server */
+async function uploadFileToServer(file, bucket = null){
+  if(!file) return null;
+  const MAX = 6 * 1024 * 1024;
+  if(file.size > MAX) throw new Error('文件过大（建议 ≤6MB）');
+  const token = (await supabase.auth.getSession()).data?.session?.access_token;
+  const form = new FormData();
+  form.append('file', file, file.name);
+  if(bucket) form.append('bucket', bucket);
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-via-server`, {
+    method: 'POST',
+    headers: token ? { Authorization: 'Bearer ' + token } : {},
+    body: form
+  });
+  const j = await resp.json().catch(()=>({}));
+  if(!resp.ok) {
+    const msg = j?.error || j?.message || JSON.stringify(j);
+    throw new Error('上传失败: ' + msg);
+  }
+  const path = j.path || j.data?.path || j.url || j.public_url || j;
+  return typeof path === 'string' ? path : JSON.stringify(path);
+}
+
+/* preview helper */
+function previewUrlFromPath(p){
+  if(!p) return '';
+  if(typeof p !== 'string') return '';
+  if(p.startsWith('http://') || p.startsWith('https://')) return p;
+  const cleaned = p.replace(/^\/+/, '');
+  return `${SUPABASE_URL}/storage/v1/object/public/${cleaned}`;
+}
+
+/* ------------------------
+   handle magic-link / reset link in URL
+   - when user clicks reset link in email, Supabase will redirect back with access_token & type=recovery
+   - we set session, and if type=recovery show resetModal for setting new password
+   ------------------------ */
 async function parseParamsFromHashOrSearch() {
   const res = {};
   const hashPart = (window.location.hash || '').replace(/^#/, '');
@@ -426,10 +469,10 @@ async function parseParamsFromHashOrSearch() {
   for (const [k, v] of p.entries()) res[k] = v;
   return res;
 }
-
 async function tryHandleAuthFromUrl() {
   try {
     const params = await parseParamsFromHashOrSearch();
+    const isRecovery = params.type === 'recovery' || params['type'] === 'recovery';
     if (params.access_token) {
       const access_token = params.access_token;
       const refresh_token = params.refresh_token || null;
@@ -437,7 +480,22 @@ async function tryHandleAuthFromUrl() {
         const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
         if (error) console.warn('[Auth] setSession error', error);
       } catch (e) { console.warn(e); }
-      // 清理 URL（移除 token）
+      // show reset modal if recovery flow
+      if (isRecovery) {
+        // give time to set session
+        setTimeout(()=> {
+          resetError.textContent = '';
+          resetMsg.textContent = '';
+          newPassword.value = '';
+          confirmPassword.value = '';
+          resetModal.style.display = 'block';
+        }, 300);
+      } else {
+        // normal magic link sign-in: continue to app logic
+        // delay to let auth state subscription handle it
+        setTimeout(()=> afterLogin(), 300);
+      }
+      // clean up url to remove tokens
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -450,17 +508,55 @@ async function tryHandleAuthFromUrl() {
   } catch(e){ console.warn('tryHandleAuthFromUrl exception', e); }
 }
 
+/* reset modal handlers */
+resetCancelBtn.addEventListener('click', () => {
+  resetModal.style.display = 'none';
+  // optionally sign out to clear session
+  supabase.auth.signOut();
+});
+
+resetSubmitBtn.addEventListener('click', async () => {
+  resetError.textContent = '';
+  resetMsg.textContent = '';
+  const p1 = (newPassword.value||'').trim();
+  const p2 = (confirmPassword.value||'').trim();
+  if(!p1 || p1.length < 8) return showError(resetError, '请填写至少 8 位新密码');
+  if(p1 !== p2) return showError(resetError, '两次密码不一致');
+  try {
+    resetMsg.textContent = '正在设置新密码...';
+    // updateUser requires an authenticated session (we set session earlier from URL)
+    const { data, error } = await supabase.auth.updateUser({ password: p1 });
+    if(error) {
+      resetMsg.textContent = '';
+      return showError(resetError, '设置失败: ' + (error.message || JSON.stringify(error)));
+    }
+    resetMsg.textContent = '密码已重设成功，请使用新密码重新登录。';
+    // sign out after short delay, return to login UI
+    setTimeout(async () => {
+      await supabase.auth.signOut();
+      resetModal.style.display = 'none';
+      authCard.style.display = '';
+      profileCard.style.display = 'none';
+      rightTopArea.textContent = '未登录';
+      btnSignOut.style.display = 'none';
+      authMsg.textContent = '密码已重设，请使用新密码登录。';
+    }, 1200);
+  } catch(e){
+    resetMsg.textContent = '';
+    showError(resetError, e.message || e);
+  }
+});
+
 /* startup */
 (async function init(){
   await tryHandleAuthFromUrl();
-
   // subscribe auth state changes
   supabase.auth.onAuthStateChange((event, session) => {
     if(session?.access_token) {
-      // signed in -> try afterLogin which will determine redirect or show profile form
+      // signed in -> afterLogin will check designers & decide redirect or show profile form
       afterLogin();
     } else {
-      // signed out -> reset UI
+      // signed out -> default login UI
       currentUser = null;
       currentDesigner = null;
       authCard.style.display = '';
@@ -478,7 +574,6 @@ async function tryHandleAuthFromUrl() {
     currentUser = data.session.user;
     await afterLogin();
   } else {
-    // show login
     authCard.style.display = '';
     profileCard.style.display = 'none';
     btnSignOut.style.display = 'none';
