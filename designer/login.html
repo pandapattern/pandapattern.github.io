@@ -83,7 +83,7 @@
       <input id="d_brandlogo_file" type="file" accept="image/*" />
       <div style="margin-top:8px;">
         <img id="brandPreview" class="avatarPreview" alt="brand logo" src="" />
-        <div class="fileHint">横向 logo 建议 600×200，最大 5MB。</div>
+        <div class="fileHint">建议 512×512，最大 5MB。</div>
       </div>
 
       <label>店铺网址（可选）</label>
@@ -298,17 +298,21 @@ btnSignOut.addEventListener('click', async () => {
    If not -> show profileCard for filling in data.
 
    IMPORTANT: if recoveryFlow === true, DO NOT redirect; instead show reset modal
+   Also: if URL has ?edit=1 (forceEdit) then always show the profile edit form,
+   even if designer exists — this enables "从主页点击编辑信息" 的需求.
 */
 async function afterLogin(){
+  // forceEdit read from URL search params
+  const params = new URLSearchParams(window.location.search || '');
+  const forceEdit = params.get('edit') === '1' || params.get('edit') === 'true';
+
   // if recovery flow, do not auto-redirect; show reset modal for user to set password
   if(recoveryFlow){
-    // ensure UI reflects signed-in state but do not query designers/redirect
     const { data } = await supabase.auth.getSession();
     currentUser = data?.session?.user || currentUser;
     rightTopArea.textContent = `已登录： ${currentUser?.email || currentUser?.id || ''}`;
     authCard.style.display = 'none';
     btnSignOut.style.display = '';
-    // show reset modal (if not already shown)
     resetError.textContent = '';
     resetMsg.textContent = '';
     newPassword.value = '';
@@ -335,12 +339,23 @@ async function afterLogin(){
       headers: { Authorization: token ? 'Bearer ' + token : '' }
     });
     const j = await resp.json().catch(()=>({}));
-    if(resp.ok && (j.designer || (Array.isArray(j.designers) && j.designers.length > 0))) {
-      // 有设计师记录 -> 直接去首页
-      window.location.href = 'index.html';
-      return;
+    const hasDesigner = resp.ok && (j.designer || (Array.isArray(j.designers) && j.designers.length > 0));
+
+    if(hasDesigner) {
+      if (forceEdit) {
+        // show profile edit with existing data
+        currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || null;
+        fillProfileForm(currentDesigner);
+        profileMsg.textContent = '编辑你的资料，保存后返回首页。';
+        profileCard.style.display = '';
+        return;
+      } else {
+        // normal behavior: redirect to homepage
+        window.location.href = 'index.html';
+        return;
+      }
     } else {
-      // 没有 -> 显示并填写资料
+      // 没有 designer 记录 -> 显示并填写资料
       currentDesigner = null;
       fillProfileForm(null);
       profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
@@ -523,7 +538,7 @@ async function tryHandleAuthFromUrl() {
         setTimeout(()=> afterLogin(), 300);
       }
 
-      // clean up url to remove tokens
+      // clean up url to remove tokens (preserve search params like ?edit=1)
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
     }
