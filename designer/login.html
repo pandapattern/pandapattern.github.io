@@ -143,6 +143,9 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://fdxvtmgmmrpdkwhrbsfl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkeHZ0bWdtbXJwZGt3aHJic2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMzY0NTUsImV4cCI6MjA3NDkxMjQ1NX0.iU-T3S8OzgGSXtbIf6D7WsMAaIXKNqZE8ooScS4udEk";
 
+// default public bucket used when backend returns a storage path without bucket prefix
+const DEFAULT_PUBLIC_BUCKET = "patterns-originals";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ===== DOM ===== */
@@ -426,15 +429,18 @@ btnSaveProfile.addEventListener('click', async () => {
     // upload avatar/logo via your upload-via-server function
     if(d_avatar_file.files && d_avatar_file.files[0]) {
       const f = d_avatar_file.files[0];
-      const path = await uploadFileToServer(f, 'avatars');
-      payload.avatar_url = typeof path === 'string' ? path : String(path);
+      // upload to 'avatars' bucket — backend will return publicUrl when possible
+      const uploaded = await uploadFileToServer(f, 'avatars');
+      // uploadFileToServer returns a public URL (preferred) or a storage path; we store the returned string
+      payload.avatar_url = typeof uploaded === 'string' ? uploaded : String(uploaded);
     } else if(currentDesigner?.avatar_url) {
       payload.avatar_url = currentDesigner.avatar_url;
     }
     if(d_brandlogo_file.files && d_brandlogo_file.files[0]) {
       const f = d_brandlogo_file.files[0];
-      const path = await uploadFileToServer(f, 'brand_logos');
-      payload.brand_logo_url = typeof path === 'string' ? path : String(path);
+      // upload to 'brand_logos' bucket
+      const uploaded = await uploadFileToServer(f, 'brand_logos');
+      payload.brand_logo_url = typeof uploaded === 'string' ? uploaded : String(uploaded);
     } else if(currentDesigner?.brand_logo_url) {
       payload.brand_logo_url = currentDesigner.brand_logo_url;
     }
@@ -463,7 +469,10 @@ btnSaveProfile.addEventListener('click', async () => {
   }
 });
 
-/* upload file to Edge Function upload-via-server */
+/* upload file to Edge Function upload-via-server
+   - returns: prefer backend publicUrl (string), otherwise returns a constructed public URL when possible,
+     else returns the raw path/string returned by server.
+*/
 async function uploadFileToServer(file, bucket = null){
   if(!file) return null;
   const MAX = 6 * 1024 * 1024;
@@ -472,18 +481,48 @@ async function uploadFileToServer(file, bucket = null){
   const form = new FormData();
   form.append('file', file, file.name);
   if(bucket) form.append('bucket', bucket);
+
   const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-via-server`, {
     method: 'POST',
     headers: token ? { Authorization: 'Bearer ' + token } : {},
     body: form
   });
+
   const j = await resp.json().catch(()=>({}));
   if(!resp.ok) {
     const msg = j?.error || j?.message || JSON.stringify(j);
     throw new Error('上传失败: ' + msg);
   }
-  const path = j.path || j.data?.path || j.url || j.public_url || j;
-  return typeof path === 'string' ? path : JSON.stringify(path);
+
+  // 1) if backend returned a ready-to-use public URL, use it
+  const publicUrl = j.publicUrl || j.public_url || j.data?.publicUrl || j.data?.public_url;
+  if(publicUrl && typeof publicUrl === 'string') return publicUrl;
+
+  // 2) otherwise inspect returned path/bucket
+  const returnedPath = (j.path || j.data?.path || j.url || j.public_url || j.publicUrl || null);
+  const returnedBucket = (j.bucket || j.data?.bucket || bucket || null);
+
+  if(returnedPath && typeof returnedPath === 'string') {
+    // if it's already an absolute URL, return as-is
+    if(returnedPath.startsWith('http://') || returnedPath.startsWith('https://')) return returnedPath;
+    // normalize cleaned path
+    const cleaned = returnedPath.replace(/^\/+/, '');
+    // determine whether returnedPath already contains bucket-like prefix
+    const firstSeg = cleaned.split('/')[0];
+    // if it already looks like "bucket/..." then assume it's complete
+    const bucketToUse = (firstSeg && (firstSeg.indexOf('.') === -1 && firstSeg.indexOf('http') === -1)) ? firstSeg : null;
+    if(bucketToUse && cleaned.split('/').length > 1) {
+      // use cleaned as-is (contains bucket)
+      return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${cleaned}`;
+    } else {
+      // prepend returnedBucket or DEFAULT_PUBLIC_BUCKET
+      const b = returnedBucket || DEFAULT_PUBLIC_BUCKET;
+      return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${b}/${cleaned}`;
+    }
+  }
+
+  // fallback: return entire response (stringified)
+  return typeof j === 'string' ? j : JSON.stringify(j);
 }
 
 /* preview helper */
