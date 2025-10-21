@@ -209,7 +209,6 @@ const libList = document.getElementById('libList');
 const libRefreshBtn = document.getElementById('libRefreshBtn');
 const libCloseBtn = document.getElementById('libCloseBtn');
 const libAddSelectedBtn = document.getElementById('libAddSelectedBtn');
-const libClearCacheBtn = document.getElementById('libClearCacheBtn');
 
 const overlay = document.getElementById('overlay');
 const overlayText = document.getElementById('overlayText');
@@ -255,7 +254,6 @@ async function init(){
   libCloseBtn.addEventListener('click', closeMaterialsModal);
   libRefreshBtn.addEventListener('click', fetchMaterialsLibraryAndRender);
   libAddSelectedBtn.addEventListener('click', addSelectedLibToMaterials);
-  libClearCacheBtn.addEventListener('click', ()=>{ localStorage.removeItem('materials_library_cache'); fetchMaterialsLibraryAndRender(); });
 
   // drag/drop handlers delegated
   materialsTbody.addEventListener('dragstart', matDragStart);

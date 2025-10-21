@@ -110,7 +110,7 @@
           <button id="forgotSendBtn">发送重置邮件</button>
           <button id="forgotCancelBtn" class="ghost">取消</button>
         </div>
-        <div id="forgotMsg" class="muted-sm" style="margin-top:8px;"></div>
+        <div id="forgotMsg" class="muted-sm" style="margin-top:8px"></div>
         <div id="forgotError" class="error"></div>
       </div>
     </div>
@@ -130,7 +130,7 @@
           <button id="resetSubmitBtn">设置新密码</button>
           <button id="resetCancelBtn" class="ghost">取消</button>
         </div>
-        <div id="resetMsg" class="muted-sm" style="margin-top:8px;"></div>
+        <div id="resetMsg" class="muted-sm" style="margin-top:8px"></div>
         <div id="resetError" class="error"></div>
       </div>
     </div>
@@ -191,20 +191,13 @@ const resetError = document.getElementById('resetError');
 let currentUser = null;
 let currentDesigner = null;
 
-/* ===== recovery flag =====
-   当用户从邮件点击回来用于重置密码时（type=recovery），
-   我们设置 recoveryFlow = true，避免 afterLogin() 自动跳转到首页。
-*/
+/* ===== recovery flag ===== */
 let recoveryFlow = false;
 
 /* ===== helpers ===== */
 function showError(el, txt){ el.textContent = txt || ''; }
-function setAuthBusy(on, text){
-  authMsg.textContent = on ? (text || '处理中...') : '';
-}
-function setProfileBusy(on, text){
-  profileMsg.textContent = on ? (text || '处理中...') : '';
-}
+function setAuthBusy(on, text){ authMsg.textContent = on ? (text || '处理中...') : ''; }
+function setProfileBusy(on, text){ profileMsg.textContent = on ? (text || '处理中...') : ''; }
 function isValidEmail(e){ return /\S+@\S+\.\S+/.test(String(e||'').trim()); }
 
 /* ===== auth handlers ===== */
@@ -249,18 +242,14 @@ btnRegister.addEventListener('click', async () => {
   }
 });
 
-/* 打开忘记密码弹框 */
+/* 忘记密码 */
 btnForgotPassword.addEventListener('click', () => {
   forgotEmail.value = emailEl.value || '';
   forgotMsg.textContent = '';
   forgotError.textContent = '';
   forgotModal.style.display = 'block';
 });
-
-/* 取消忘记密码弹框 */
 forgotCancelBtn.addEventListener('click', () => { forgotModal.style.display = 'none'; });
-
-/* 发送忘记密码邮件 */
 forgotSendBtn.addEventListener('click', async () => {
   forgotError.textContent = '';
   forgotMsg.textContent = '';
@@ -268,16 +257,12 @@ forgotSendBtn.addEventListener('click', async () => {
   if(!isValidEmail(em)) return showError(forgotError, '请填写有效邮箱');
   try {
     forgotMsg.textContent = '正在发送重置邮件...';
-    const redirectTo = window.location.origin + window.location.pathname; // 点击邮件回到本页
+    const redirectTo = window.location.origin + window.location.pathname;
     const { data, error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo });
     forgotMsg.textContent = '';
-    if(error) {
-      return showError(forgotError, '发送失败: ' + (error.message || JSON.stringify(error)));
-    }
+    if(error) return showError(forgotError, '发送失败: ' + (error.message || JSON.stringify(error)));
     forgotMsg.textContent = '已发送重置邮件（若该邮箱存在，请查收）。';
-  } catch(e){
-    showError(forgotError, e.message || e);
-  }
+  } catch(e){ showError(forgotError, e.message || e); }
 });
 
 /* 注销 */
@@ -296,20 +281,11 @@ btnSignOut.addEventListener('click', async () => {
   profileMsg.textContent = '';
 });
 
-/* after login: fetch designers via Edge Function.
-   If a designers record exists -> redirect to index.html (首页)
-   If not -> show profileCard for filling in data.
-
-   IMPORTANT: if recoveryFlow === true, DO NOT redirect; instead show reset modal
-   Also: if URL has ?edit=1 (forceEdit) then always show the profile edit form,
-   even if designer exists — this enables "从主页点击编辑信息" 的需求.
-*/
+/* after login */
 async function afterLogin(){
-  // forceEdit read from URL search params
   const params = new URLSearchParams(window.location.search || '');
   const forceEdit = params.get('edit') === '1' || params.get('edit') === 'true';
 
-  // if recovery flow, do not auto-redirect; show reset modal for user to set password
   if(recoveryFlow){
     const { data } = await supabase.auth.getSession();
     currentUser = data?.session?.user || currentUser;
@@ -346,19 +322,16 @@ async function afterLogin(){
 
     if(hasDesigner) {
       if (forceEdit) {
-        // show profile edit with existing data
         currentDesigner = j.designer || (Array.isArray(j.designers) && j.designers[0]) || null;
         fillProfileForm(currentDesigner);
         profileMsg.textContent = '编辑你的资料，保存后返回首页。';
         profileCard.style.display = '';
         return;
       } else {
-        // normal behavior: redirect to homepage
         window.location.href = 'index.html';
         return;
       }
     } else {
-      // 没有 designer 记录 -> 显示并填写资料
       currentDesigner = null;
       fillProfileForm(null);
       profileMsg.textContent = '尚未填写设计师资料，请填写并保存（用户名为必填）。';
@@ -366,7 +339,6 @@ async function afterLogin(){
       return;
     }
   } catch(e){
-    // 网络/权限问题仍允许用户填写资料
     profileError.textContent = '读取设计师资料失败: ' + (e.message || e);
     currentDesigner = null;
     fillProfileForm(null);
@@ -426,21 +398,19 @@ btnSaveProfile.addEventListener('click', async () => {
       website: (d_website.value||'').trim() || null
     };
 
-    // upload avatar/logo via your upload-via-server function
+    // upload avatar/logo via upload-via-server, pass currentUser.id as patternId to avoid "unknown"
     if(d_avatar_file.files && d_avatar_file.files[0]) {
       const f = d_avatar_file.files[0];
-      // upload to 'avatars' bucket — backend will return publicUrl when possible
-      const uploaded = await uploadFileToServer(f, 'avatars');
-      // uploadFileToServer returns a public URL (preferred) or a storage path; we store the returned string
-      payload.avatar_url = typeof uploaded === 'string' ? uploaded : String(uploaded);
+      const uploaded = await uploadFileToServer(f, 'avatars', currentUser?.id || 'user_unknown');
+      payload.avatar_url = uploaded;
     } else if(currentDesigner?.avatar_url) {
       payload.avatar_url = currentDesigner.avatar_url;
     }
+
     if(d_brandlogo_file.files && d_brandlogo_file.files[0]) {
-      const f = d_brandlogo_file.files[0];
-      // upload to 'brand_logos' bucket
-      const uploaded = await uploadFileToServer(f, 'brand_logos');
-      payload.brand_logo_url = typeof uploaded === 'string' ? uploaded : String(uploaded);
+      const f2 = d_brandlogo_file.files[0];
+      const uploaded2 = await uploadFileToServer(f2, 'brand_logos', currentUser?.id || 'user_unknown');
+      payload.brand_logo_url = uploaded2;
     } else if(currentDesigner?.brand_logo_url) {
       payload.brand_logo_url = currentDesigner.brand_logo_url;
     }
@@ -470,17 +440,23 @@ btnSaveProfile.addEventListener('click', async () => {
 });
 
 /* upload file to Edge Function upload-via-server
-   - returns: prefer backend publicUrl (string), otherwise returns a constructed public URL when possible,
-     else returns the raw path/string returned by server.
+   - returns: a public URL string suitable for <img src="...">,
+     preferring backend publicUrl when available; otherwise constructs public URL.
+   - params:
+     - file: File
+     - bucket: desired storage bucket name (string) or null (server will use default)
+     - patternId: optional id used to avoid 'unknown' directories (string)
 */
-async function uploadFileToServer(file, bucket = null){
+async function uploadFileToServer(file, bucket = null, patternId = null){
   if(!file) return null;
   const MAX = 6 * 1024 * 1024;
   if(file.size > MAX) throw new Error('文件过大（建议 ≤6MB）');
+
   const token = (await supabase.auth.getSession()).data?.session?.access_token;
   const form = new FormData();
   form.append('file', file, file.name);
   if(bucket) form.append('bucket', bucket);
+  if(patternId) form.append('patternId', patternId);
 
   const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-via-server`, {
     method: 'POST',
@@ -494,34 +470,32 @@ async function uploadFileToServer(file, bucket = null){
     throw new Error('上传失败: ' + msg);
   }
 
-  // 1) if backend returned a ready-to-use public URL, use it
+  // 1) prefer explicit publicUrl returned by server
   const publicUrl = j.publicUrl || j.public_url || j.data?.publicUrl || j.data?.public_url;
   if(publicUrl && typeof publicUrl === 'string') return publicUrl;
 
-  // 2) otherwise inspect returned path/bucket
+  // 2) otherwise examine returned path & bucket and construct public url
   const returnedPath = (j.path || j.data?.path || j.url || j.public_url || j.publicUrl || null);
   const returnedBucket = (j.bucket || j.data?.bucket || bucket || null);
 
   if(returnedPath && typeof returnedPath === 'string') {
     // if it's already an absolute URL, return as-is
     if(returnedPath.startsWith('http://') || returnedPath.startsWith('https://')) return returnedPath;
-    // normalize cleaned path
+
+    // clean leading slashes
     const cleaned = returnedPath.replace(/^\/+/, '');
-    // determine whether returnedPath already contains bucket-like prefix
-    const firstSeg = cleaned.split('/')[0];
-    // if it already looks like "bucket/..." then assume it's complete
-    const bucketToUse = (firstSeg && (firstSeg.indexOf('.') === -1 && firstSeg.indexOf('http') === -1)) ? firstSeg : null;
-    if(bucketToUse && cleaned.split('/').length > 1) {
-      // use cleaned as-is (contains bucket)
+    // if cleaned already contains bucket prefix (like "avatars/...."), use it directly
+    const firstSeg = cleaned.split('/')[0] || '';
+    if(firstSeg && (firstSeg === returnedBucket || firstSeg === 'avatars' || firstSeg === 'brand_logos' || firstSeg === 'patterns' || firstSeg === 'public')) {
       return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${cleaned}`;
     } else {
-      // prepend returnedBucket or DEFAULT_PUBLIC_BUCKET
+      // use returnedBucket if present, otherwise default
       const b = returnedBucket || DEFAULT_PUBLIC_BUCKET;
       return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${b}/${cleaned}`;
     }
   }
 
-  // fallback: return entire response (stringified)
+  // fallback: stringify the whole response (not ideal, but safe)
   return typeof j === 'string' ? j : JSON.stringify(j);
 }
 
@@ -531,14 +505,16 @@ function previewUrlFromPath(p){
   if(typeof p !== 'string') return '';
   if(p.startsWith('http://') || p.startsWith('https://')) return p;
   const cleaned = p.replace(/^\/+/, '');
-  return `${SUPABASE_URL}/storage/v1/object/public/${cleaned}`;
+  // if path already contains bucket prefix -> use as-is
+  const firstSeg = cleaned.split('/')[0] || '';
+  if(firstSeg && (firstSeg === 'avatars' || firstSeg === 'brand_logos' || firstSeg === 'patterns' || firstSeg === 'public' || firstSeg === DEFAULT_PUBLIC_BUCKET)) {
+    return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${cleaned}`;
+  }
+  // otherwise prepend default bucket
+  return `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/${DEFAULT_PUBLIC_BUCKET}/${cleaned}`;
 }
 
-/* ------------------------
-   handle magic-link / reset link in URL
-   - when user clicks reset link in email, Supabase will redirect back with access_token & type=recovery
-   - we set session, and if type=recovery show resetModal for setting new password
-   ------------------------ */
+/* parse URL auth params */
 async function parseParamsFromHashOrSearch() {
   const res = {};
   const hashPart = (window.location.hash || '').replace(/^#/, '');
@@ -552,9 +528,7 @@ async function tryHandleAuthFromUrl() {
     const params = await parseParamsFromHashOrSearch();
     const isRecovery = params.type === 'recovery' || params['type'] === 'recovery';
     if (params.access_token) {
-      // mark recovery flow BEFORE setSession so afterLogin can detect it
       recoveryFlow = isRecovery === true;
-
       const access_token = params.access_token;
       const refresh_token = params.refresh_token || null;
       try {
@@ -562,9 +536,7 @@ async function tryHandleAuthFromUrl() {
         if (error) console.warn('[Auth] setSession error', error);
       } catch (e) { console.warn(e); }
 
-      // If recovery, show reset modal (we still keep session so updateUser works)
       if (isRecovery) {
-        // give auth a moment to settle then show modal
         setTimeout(()=> {
           resetError.textContent = '';
           resetMsg.textContent = '';
@@ -573,11 +545,9 @@ async function tryHandleAuthFromUrl() {
           resetModal.style.display = 'block';
         }, 300);
       } else {
-        // normal magic link sign-in: continue to app logic
         setTimeout(()=> afterLogin(), 300);
       }
 
-      // clean up url to remove tokens (preserve search params like ?edit=1)
       const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -594,7 +564,6 @@ async function tryHandleAuthFromUrl() {
 resetCancelBtn.addEventListener('click', () => {
   resetModal.style.display = 'none';
   recoveryFlow = false;
-  // optionally sign out to clear session
   supabase.auth.signOut();
 });
 
@@ -607,14 +576,12 @@ resetSubmitBtn.addEventListener('click', async () => {
   if(p1 !== p2) return showError(resetError, '两次密码不一致');
   try {
     resetMsg.textContent = '正在设置新密码...';
-    // updateUser requires an authenticated session (we set session earlier from URL)
     const { data, error } = await supabase.auth.updateUser({ password: p1 });
     if(error) {
       resetMsg.textContent = '';
       return showError(resetError, '设置失败: ' + (error.message || JSON.stringify(error)));
     }
     resetMsg.textContent = '密码已重设成功，请使用新密码重新登录。';
-    // sign out after short delay, clear recovery flag, return to login UI
     setTimeout(async () => {
       recoveryFlow = false;
       await supabase.auth.signOut();
@@ -634,13 +601,10 @@ resetSubmitBtn.addEventListener('click', async () => {
 /* startup */
 (async function init(){
   await tryHandleAuthFromUrl();
-  // subscribe auth state changes
   supabase.auth.onAuthStateChange((event, session) => {
     if(session?.access_token) {
-      // signed in -> afterLogin will check designers & decide redirect or show profile form
       afterLogin();
     } else {
-      // signed out -> default login UI
       currentUser = null;
       currentDesigner = null;
       authCard.style.display = '';
@@ -652,7 +616,6 @@ resetSubmitBtn.addEventListener('click', async () => {
     }
   });
 
-  // check existing session
   const { data } = await supabase.auth.getSession();
   if(data?.session?.user) {
     currentUser = data.session.user;
