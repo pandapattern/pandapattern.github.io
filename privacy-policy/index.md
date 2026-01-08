@@ -1,6 +1,7 @@
 ---
 layout: page
 title: 隐私政策
+lang: zh-CN
 ---
 
 # 隐私政策

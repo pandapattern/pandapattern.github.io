@@ -9,8 +9,13 @@
 # --- Required options --- #
 ############################
 
-# Name of website
+# Name of website (default language)
 title: 熊手纸样
+
+# Multi-language titles
+titles:
+  zh-CN: 熊手纸样
+  en: Panda Pattern
 
 # Your name to show in the footer
 author: Panda Pattern
@@ -19,9 +24,19 @@ author: Panda Pattern
 # --- List of links in the navigation bar --- #
 ###############################################
 
+# Navigation links (default language - Chinese)
 navbar-links:
   设计师: "designer"
   关于我们: "aboutus"
+
+# Multi-language navigation links
+navbar-links-l10n:
+  zh-CN:
+    设计师: "designer"
+    关于我们: "aboutus"
+  en:
+    Designer: "designer"
+    About Us: "aboutus"
 
 ################
 # --- Logo --- #
@@ -281,11 +296,32 @@ defaults:
       layout: "post"
       comments: true  # add comments to all blog posts
       social-share: true # add social media sharing buttons to all blog posts
+      lang: zh-CN
+  -
+    scope:
+      path: "index.md"
+    values:
+      layout: "home"
+      lang: zh-CN
+      permalink: /
   -
     scope:
       path: "" # any file that's not a post will be a "page" layout by default
     values:
       layout: "page"
+      lang: zh-CN
+  -
+    scope:
+      path: "en"
+    values:
+      lang: en
+  -
+    scope:
+      path: "en/index.md"
+    values:
+      layout: "home"
+      lang: en
+      permalink: /en/
 
 # Exclude these files from production site
 exclude:
@@ -301,6 +337,18 @@ exclude:
 plugins:
   - jekyll-paginate
   - jekyll-sitemap
+  # Using manual language directories instead of jekyll-polyglot
+  # - jekyll-polyglot
+
+############################
+# --- Multi-language --- #
+############################
+
+# Default language
+default_lang: zh-CN
+
+# Supported languages (for language switcher)
+languages: ["zh-CN", "en"]
 
 # Beautiful Jekyll / Dean Attali
 # 2fc73a3a967e97599c9763d05e564189

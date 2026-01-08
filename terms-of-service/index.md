@@ -1,6 +1,7 @@
 ---
 layout: page
 title: 服务条款
+lang: zh-CN
 ---
 
 # 服务条款
