@@ -238,6 +238,97 @@ nav > ul li a:active {
 	color: rgba(#000, 1);
 }
 
+// Language Switcher
+.lang-switcher {
+	display: flex;
+	align-items: center;
+	margin-left: 20px;
+	gap: 10px;
+}
+
+.lang-link {
+	font-size: 1.4rem;
+	padding: 5px 10px;
+	border-radius: 4px;
+	transition: all 0.3s ease;
+}
+
+.headerBackground .lang-link {
+	color: rgba($header-title-color, 0.6);
+}
+
+.headerBackground .lang-link:hover {
+	color: rgba($header-title-color, 1);
+	background-color: rgba($header-title-color, 0.1);
+}
+
+.subPageHeaderBackground .lang-link {
+	color: rgba(#000, 0.6);
+}
+
+.subPageHeaderBackground .lang-link:hover {
+	color: rgba(#000, 1);
+	background-color: rgba(#000, 0.1);
+}
+
+@media only screen and (max-width: 768px) {
+	.lang-switcher {
+		margin-left: 10px;
+		gap: 5px;
+	}
+	
+	.lang-link {
+		font-size: 1.2rem;
+		padding: 4px 8px;
+	}
+}
+
+// Language Switcher
+.lang-switcher {
+	display: flex;
+	align-items: center;
+	margin-left: 20px;
+	gap: 10px;
+}
+
+.lang-link {
+	font-size: 1.4rem;
+	padding: 5px 10px;
+	border-radius: 4px;
+	text-decoration: none;
+	transition: all 0.3s ease;
+}
+
+.subPageHeaderBackground .lang-link {
+	color: rgba(#000, 0.6);
+}
+
+.subPageHeaderBackground .lang-link:hover {
+	color: rgba(#000, 1);
+	background-color: rgba(#000, 0.05);
+}
+
+.headerBackground .lang-link {
+	color: rgba($header-title-color, 0.6);
+}
+
+.headerBackground .lang-link:hover {
+	color: rgba($header-title-color, 1);
+	background-color: rgba($header-title-color, 0.1);
+}
+
+@media only screen and (max-width: 768px) {
+	.lang-switcher {
+		margin-left: 10px;
+		gap: 5px;
+	}
+	
+	.lang-link {
+		font-size: 1.2rem;
+		padding: 4px 8px;
+	}
+}
+
 
 
 // App Title, Price, Description and Links

@@ -1,7 +1,9 @@
 ---
 layout: page
 title: What's New
+lang: en
 include_in_header: true
+permalink: /en/changelog/
 ---
 
 # Changelog
@@ -15,11 +17,11 @@ This is the first update to our app. Jeez **goodness** by kept more sensually a 
 
 #### What's New
 - Much far proper exotically precise unaccountable.
-- [Changes to Privacy Policy](/privacypolicy)
+- [Changes to Privacy Policy](/en/privacypolicy/)
 
 #### Bug Fixes
 - Much far proper exotically precise unaccountable.
-- [Changes to Privacy Policy](/privacypolicy)
+- [Changes to Privacy Policy](/en/privacypolicy/)
 
 <br>
 

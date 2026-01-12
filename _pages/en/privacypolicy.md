@@ -1,7 +1,9 @@
 ---
 layout: page
 title: Privacy Policy
+lang: en
 include_in_header: false
+permalink: /en/privacypolicy/
 ---
 
 **Last updated**  
@@ -41,7 +43,7 @@ Various remotely save this querulously explicitly one this and far congenially b
 <br>
 
 ## 3.0 What rights do you, as the data subject, have
-This goodness well well and more cowardly lynx credibly more apart save and less oh examined ouch marginal growled and proper liberally salmon busy some while pointed far because understood.
+This goodness well well and more cowardly lynx credibly more apart save and less oh examined ouch marginal grewled and proper liberally salmon busy some while pointed far because understood.
 
 1. Boastfully or possessively oh modest amidst.
 2. Far far the much purposeful that wildebeest dalmatian.

@@ -110,6 +110,13 @@ footer_text_color                         : "#555555"
 ### Jekyll Configuration. No need to touch this. ###
 ####################################################
 
+# Multi-language support
+languages: ["zh", "en"]
+default_lang: "zh"
+lang_names:
+  zh: "中文"
+  en: "English"
+
 # Set the Sass partials directory, as we're using @imports
 sass:
   style: :compressed # You might prefer to minify using :compressed
