@@ -38,17 +38,25 @@ mastodon_link                             :
 # Feature List                            Edit, add or remove features to be presented.
 features                                  :
 
-  - title                                 : 纸样投影
-    description                           : 手机连接投影仪，将纸样以实际尺寸投影到面料上，直接裁切。数字校准精确控制，大幅简化裁切流程。用纸样，找熊手。
+  - title                                 : 投影仪裁切
+    description                           : 手机连接投影仪，数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁切流程。
     fontawesome_icon_name                 : magic
     
   - title                                 : 纸样存储
-    description                           : 支持 PDF / PLT / SVG 等格式的纸样存储和预览。按款式、尺码或项目进行分类管理，让纸样资产更加清晰有序，易于使用。
+    description                           : 支持 PDF / PLT / SVG 格式的纸样存储和预览。按款式、格式进行分类管理，让纸样更加清晰有序，易于查找。
     fontawesome_icon_name                 : mobile
 
+  - title                                 : 纸样拼接
+    description                           : 将小尺寸 A4 / A3 / US Letter 纸张拼接成一整张大尺寸纸样。支持小尺寸纸样拼接后投影仪裁切。
+    fontawesome_icon_name                 : file-pdf
+
+  - title                                 : 纸样打印
+    description                           : 支持将大尺寸纸样裁切为小尺寸 A4、A3、US Letter 纸张打印。支持 AirPrint，手机直接打印。
+    fontawesome_icon_name                 : print
+
   - title                                 : 缝纫社区
-    description                           : 加入缝纫社区，和同好们交流分享，帮助你找到适合你的纸样、教程、设计师以及面辅料供应商。
-    fontawesome_icon_name                 : play-circle
+    description                           : 加入缝纫社区，和同好分享交流，帮助你找到适合的纸样、教程、设计师和面辅料供应商。
+    fontawesome_icon_name                 : link
 
   - title                                 : # New Feature Title
     description                           : # New Feature Description
@@ -65,7 +73,7 @@ cover_image                               : assets/headerimage.jpg            # 
 cover_overlay_color                       : "#161b1d"
 cover_overlay_transparency                : 0.5
 
-device_color                              : black                                     # Set to: blue, black, yellow, coral or white.
+device_color                              : yellow                                     # Set to: blue, black, yellow, coral or white.
 
 body_background_color                     : "#ffffff"
 
@@ -75,16 +83,16 @@ app_title_color                           : "#ffffff"
 app_price_color                           : "#ffffff"
 app_description_color                     : "#ffffff"
 
-feature_title_color                       : "#000000"
-feature_text_color                        : "#666666"
+feature_title_color                       : "#ffc403"
+feature_text_color                        : "#555555"
 
-feature_icons_foreground_color            : "#1d63ea"
+feature_icons_foreground_color            : "#ffc403"
 feature_icons_background_color            : "#e6e6e6"
 
 social_icons_foreground_color             : "#666666"
 social_icons_background_color             : "#e6e6e6"
 
-footer_text_color                         : "#666666"
+footer_text_color                         : "#555555"
 
 
 
