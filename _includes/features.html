@@ -3,12 +3,9 @@
     {% for feature in site.features %}
 
     {% if feature.title %}
-    <div class="feature">
-        <div>
-            <span class="fa-stack fa-1x">
-                <i class="iconBack fas fa-circle fa-stack-2x"></i>
-                <i class="iconTop fas fa-{{ feature.fontawesome_icon_name }} fa-stack-1x"></i>
-            </span>
+    <div class="feature"{% if feature.background_color %} style="background-color: {{ feature.background_color }};"{% endif %}>
+        <div class="featureIconBackground">
+            <i class="iconTop fas fa-{{ feature.fontawesome_icon_name }}"></i>
         </div>
         <div class="featureText">
             <h3>

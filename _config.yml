@@ -12,9 +12,8 @@ presskit_download_link                    :                                     
 
 app_icon                                  : assets/app-icon.png                        # Automatically populates if not set and if iOS app ID is set.  Otherwise enter path to icon file manually.
 app_name                                  : 熊手纸样                                    # Automatically populates if not set and if iOS app ID is set.  Otherwise enter manually.
-app_price                                 :                                            # Automatically populates if not set and if iOS app ID is set.  Otherwise enter manually.
-app_description                           : 投影仪裁切、拼接、打印、管理纸样，一个 App 全搞定。
-
+app_price                                 : 免费（App 内购买）                                           # Automatically populates if not set and if iOS app ID is set.  Otherwise enter manually.
+app_description                           : 投影仪裁切、拼接、打印、管理纸样，一个App全搞定。
 enable_smart_app_banner                   : true                                      # Set to true to show a smart app banner at top of page on mobile devices.
 
 
@@ -39,28 +38,34 @@ mastodon_link                             :
 features                                  :
 
   - title                                 : 投影仪裁切
-    description                           : 手机连接投影仪，数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁切流程。
-    fontawesome_icon_name                 : magic
-    
-  - title                                 : 纸样存储
-    description                           : 支持 PDF / PLT / SVG 格式的纸样存储和预览。按款式、格式进行分类管理，让纸样更加清晰有序，易于查找。
-    fontawesome_icon_name                 : mobile
-
-  - title                                 : 纸样拼接
-    description                           : 将小尺寸 A4 / A3 / US Letter 纸张拼接成一整张大尺寸纸样。支持小尺寸纸样拼接后投影仪裁切。
-    fontawesome_icon_name                 : file-pdf
+    description                           : 数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁切流程。
+    fontawesome_icon_name                 : video
+    background_color                      : "#F5E882"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
   - title                                 : 纸样打印
-    description                           : 支持将大尺寸纸样裁切为小尺寸 A4、A3、US Letter 纸张打印。支持 AirPrint，手机直接打印。
+    description                           : 大尺寸纸样分片打印，自动裁切 A4、A3 等家用纸张打印。无需格式转换，手机直接打印。
     fontawesome_icon_name                 : print
+    background_color                      : "#90D5F2"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
+
+  - title                                 : 纸样拼接
+    description                           : 支持 A4、A3 尺寸纸样拼接成一整张大尺寸纸样，拼接后可投影仪裁切。
+    fontawesome_icon_name                 : file-pdf
+    background_color                      : "#FFB84D"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
+    
+  - title                                 : 纸样存储
+    description                           : 保存 PDF / PLT / SVG 纸样。按款式、格式进行分类管理，清晰有序，易于查找。
+    fontawesome_icon_name                 : file-image
+    background_color                      : "#8BDDC9"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
   - title                                 : 缝纫社区
-    description                           : 加入缝纫社区，和同好分享交流，帮助你找到适合的纸样、教程、设计师和面辅料供应商。
-    fontawesome_icon_name                 : link
+    description                           : 加入缝纫社区，和同好分享交流，帮助你找到喜欢的设计师，适合纸样、教程和面辅料。
+    fontawesome_icon_name                 : users
+    background_color                      : "#F6C1C9"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
   - title                                 : # New Feature Title
     description                           : # New Feature Description
     fontawesome_icon_name                 : # Enter Font Awesome icon name (e.g. star). Find icons on fontawesome.com/icons.
+    background_color                      : "#f5f5f5"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
 
 
@@ -71,7 +76,7 @@ topbar_title_color                        : "#ffffff"
 
 cover_image                               : assets/headerimage.jpg            # Replace with alternative image path or image URL.
 cover_overlay_color                       : "#161b1d"
-cover_overlay_transparency                : 0.5
+cover_overlay_transparency                : 0.6
 
 device_color                              : yellow                                     # Set to: blue, black, yellow, coral or white.
 
@@ -83,8 +88,8 @@ app_title_color                           : "#ffffff"
 app_price_color                           : "#ffffff"
 app_description_color                     : "#ffffff"
 
-feature_title_color                       : "#ffc403"
-feature_text_color                        : "#555555"
+feature_title_color                       : "#000000"
+feature_text_color                        : "#222222"
 
 feature_icons_foreground_color            : "#ffc403"
 feature_icons_background_color            : "#e6e6e6"

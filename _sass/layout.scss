@@ -95,6 +95,7 @@ header {
 	grid-area: h;
 	display: flex;
 	margin-right: -15px;
+	height: 145px;
 }
 
 .logo {
@@ -373,6 +374,9 @@ nav > ul li a:active {
 
 .appName {
 	color: $app-title-color;
+	font-family: "Source Han Sans SC", sans-serif;
+	font-size: 4.5rem;
+	font-weight: 600;
 }
 
 .appPrice {
@@ -393,6 +397,7 @@ nav > ul li a:active {
 	.appName {
 		margin-top: 30px;
 		text-align: center;
+		font-size: 3.5rem;
 	}
 	
 	.appPrice {
@@ -443,6 +448,40 @@ nav > ul li a:active {
 	margin-right: 24px;
 }
 
+.playStoreContainer {
+	position: relative;
+	display: inline-block;
+	margin-right: 24px;
+}
+
+.playStoreOverlay {
+	position: absolute;
+	top: 0;
+	left: 70px;
+	width: 180px;
+	height: 70px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	pointer-events: none;
+	background-color: rgba(0, 0, 0, 1);
+	padding-left: 12px;
+}
+
+.playStoreTextSmall {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 500;
+	margin-bottom: 4px;
+}
+
+.playStoreTextLarge {
+	font-size: 26px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
 @media only screen and (max-width: 992px) {
 
 	.playStore {
@@ -450,11 +489,20 @@ nav > ul li a:active {
 		margin-bottom: 0px;
 	}
 	
+	.playStoreContainer {
+		margin-right: 24px;
+	}
+	
 } 
 
 @media only screen and (max-width: 528px) {
 
 	.playStore {
+		margin-right: 0px;
+		margin-bottom: 24px;
+	}
+	
+	.playStoreContainer {
 		margin-right: 0px;
 		margin-bottom: 24px;
 	}
@@ -472,55 +520,56 @@ nav > ul li a:active {
 .iphonePreview {
 	grid-area: p;
 	background-image: url($device-color);
-	background-size: 400px auto;
+	background-size: 360px auto;
 	background-repeat: no-repeat;
-	margin-top: 68px;
+	margin-top: 140px;
+	font-family: "Source Han Sans SC", sans-serif;
 }
 
 .iphoneScreen {
-	width: 349px;
+	width: 314px;
 	-webkit-clip-path: url(#screenMask);
 	clip-path: url(#screenMask);
-	margin-left: 26px;
-	margin-top: 23px;
+	margin-left: 24px;
+	margin-top: 20px;
 }
 
 .videoContainer {
-	width: 349px;
-	height: 755px;
+	width: 314px;
+	height: 679px;
 	-webkit-clip-path: url(#screenMask);
 	clip-path: url(#screenMask);
-	margin-left: 26px;
-	margin-top: 23px;
+	margin-left: 24px;
+	margin-top: 20px;
 }
 
 .videoContainer > video {
-	width: 349px;
-	height: 755px;
+	width: 314px;
+	height: 679px;
 }
 
 @media only screen and (max-width: 1070px) {
 
 	.iphonePreview {
-		background-size: 370px auto;
+		background-size: 440px auto;
 	}
 
 	.iphoneScreen {
-		width: 322px;
-		margin-left: 24px;
-		margin-top: 22px;
+		width: 386px;
+		margin-left: 28px;
+		margin-top: 26px;
 	}
 
 	.videoContainer {
-		width: 322px;
-		height: 698px;
-		margin-left: 24px;
-		margin-top: 22px;
+		width: 386px;
+		height: 838px;
+		margin-left: 28px;
+		margin-top: 26px;
 	}
 	
 	.videoContainer > video {
-		width: 322px;
-		height: 698px;
+		width: 386px;
+		height: 838px;
 	}
 	
 } 
@@ -529,32 +578,32 @@ nav > ul li a:active {
 
 	.iphonePreview {
 		display: flex;
-		background-size: 260px auto;
+		background-size: 300px auto;
 		background-position: center 0;
-		margin-top: 47px;
+		margin-top: 50px;
 		justify-content: center;
 		padding-bottom: 75px;
 	}
 
 	.iphoneScreen {
-		width: 226px;
-		height: 488px;
+		width: 262px;
+		height: 566px;
 		-webkit-clip-path: url(#screenMask);
 		clip-path: url(#screenMask);
 		margin: 0px;
-		margin-top: 17px;
+		margin-top: 20px;
 	}
 
 	.videoContainer {
-		width: 226px;
-		height: 488px;
+		width: 262px;
+		height: 566px;
 		margin-left: 0px;
-		margin-top: 17px;
+		margin-top: 20px;
 	}
 
 	.videoContainer > video {
-		width: 226px;
-		height: 488px;
+		width: 262px;
+		height: 566px;
 	}
 	
 } 
@@ -570,27 +619,37 @@ nav > ul li a:active {
 	justify-content: flex-start;
 	flex-grow: 1;
 	flex-wrap: wrap;
-	margin-top: 93px;
+	margin-top: 50px;
+	background-color: #ffffff;
+	padding-top: 20px;
+	padding-bottom: 20px;
 }
 
 .feature {
 	display: flex;
-	padding-top: 63px;
-	padding-left: 15px;
-	padding-right: 15px;
-	width: calc(100%/3);
+	padding-top: 20px;
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-bottom: 20px;
+	width: calc((100% - 30px) / 3);
+	background-color: #f5f5f5;
+	border-radius: 24px;
+	margin: 0 7.5px 20px 7.5px;
+	min-height: 240px;
+	position: relative;
+	overflow: hidden;
 }
 
 .feature:nth-child(-n+3) {
-    padding-top: 0px;   
+    margin-top: 0px;
 }
 
 .feature:nth-child(3n) {
-	padding-right: 0px;
+	margin-right: 0px;
 }
 
 .feature:nth-child(3n+1) {
-	padding-left: 0px;
+	margin-left: 0px;
 }
 
 .iconBack {
@@ -599,6 +658,29 @@ nav > ul li a:active {
 
 .iconTop {
 	color: $feature-icons-foreground-color;
+}
+
+.featureIconBackground {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 60%;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding-right: 20px;
+	padding-top: 20px;
+	background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.featureIconBackground > .iconTop {
+	font-size: 120px;
+	color: #ffffff;
+	mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.1));
+	-webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.1));
 }
 
 .socialIconBack {
@@ -610,17 +692,29 @@ nav > ul li a:active {
 }
 
 .featureText {
-	margin-left: 18px;
+	margin-left: 10px;
+	margin-right: 10px;
+	position: relative;
+	z-index: 1;
+	padding-top: 40px;
+	padding-bottom: 30px;
+	padding-left: 10px;
+	padding-right: 10px;
+	font-family: "Source Han Sans SC", sans-serif;
 }
 
 .featureText > h3 {
 	color: $feature-title-color;
+	font-size: 32px;
+	font-weight: bold;
+	padding-bottom: 10px;
 }
 
 .featureText > p {
 	color: $feature-text-color;
 	margin-top: 8px;
 	line-height: 1.5;
+	padding-top: 8px;
 }
 
 @media only screen and (max-width: 992px) {
@@ -634,18 +728,25 @@ nav > ul li a:active {
 
 	.feature {
 		display: flex;
-		padding-top: 41px;
+		padding-top: 20px;
 		padding-left: 15px;
 		padding-right: 15px;
+		padding-bottom: 20px;
 		width: 100%;
+		background-color: #f5f5f5;
+		border-radius: 20px;
+		min-height: 240px;
+		position: relative;
+		overflow: hidden;
 	}
 
-	.feature:nth-child(-n+3) {
-		padding-top: 41px;   
+	.featureIconBackground > .iconTop {
+		font-size: 120px;
 	}
 
-	.feature:nth-child(1) {
-		padding-top: 0px;   
+	.featureText > h3 {
+		font-size: 28px;
+		font-weight: bold;
 	}
 
 	.feature:nth-child(3n) {
@@ -669,18 +770,25 @@ nav > ul li a:active {
 
 	.feature {
 		display: flex;
-		padding-top: 41px;
-		padding-left: 0px;
-		padding-right: 0px;
+		padding-top: 20px;
+		padding-left: 15px;
+		padding-right: 15px;
+		padding-bottom: 20px;
 		width: 100%;
+		background-color: #f5f5f5;
+		border-radius: 20px;
+		min-height: 240px;
+		position: relative;
+		overflow: hidden;
 	}
 
-	.feature:nth-child(-n+3) {
-		padding-top: 41px;   
+	.featureIconBackground > .iconTop {
+		font-size: 100px;
 	}
 
-	.feature:nth-child(1) {
-		padding-top: 0px;   
+	.featureText > h3 {
+		font-size: 30px;
+		font-weight: 900;
 	}
 
 	.feature:nth-child(3n) {
@@ -702,6 +810,7 @@ footer {
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
+	background-color: #ffffff;
 }
 
 .footerText {
@@ -739,17 +848,18 @@ footer {
 @media only screen and (max-width: 768px) {
 
 	.footerLinks {
-		flex-direction: column;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 
 	.footerLinks a {
-		justify-content: stretch;
-		margin-right: 0px;
-		margin-top: 20px;
+		margin-right: 20px;
+		margin-top: 0px;
 	}
 
-	.footerLinks a:first-child {
-		margin-top: 0px;
+	.footerLinks a:last-child {
+		margin-right: 0px;
 	}	
 
 }
