@@ -14,7 +14,7 @@ app_icon                                  : assets/app-icon.png                 
 app_name                                  : 熊手纸样                                    # Automatically populates if not set and if iOS app ID is set.  Otherwise enter manually.
 app_price                                 : 免费（App 内购买）                                           # Automatically populates if not set and if iOS app ID is set.  Otherwise enter manually.
 app_description                           : 投影仪裁切、拼接、打印、管理纸样，一个App全搞定。
-enable_smart_app_banner                   : true                                      # Set to true to show a smart app banner at top of page on mobile devices.
+enable_smart_app_banner                   : true                                   # Set to true to show a smart app banner at top of page on mobile devices.
 
 
 
@@ -38,7 +38,7 @@ mastodon_link                             :
 features                                  :
 
   - title                                 : 投影仪裁切
-    description                           : 数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁切流程。
+    description                           : 数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁料流程。
     fontawesome_icon_name                 : video
     background_color                      : "#F5E882"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
@@ -48,17 +48,17 @@ features                                  :
     background_color                      : "#90D5F2"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
   - title                                 : 纸样拼接
-    description                           : 支持 A4、A3 尺寸纸样拼接成一整张大尺寸纸样，拼接后可投影仪裁切。
+    description                           : 支持 A4、A3 尺寸纸样拼接成整张大尺寸纸样，拼接后可投影仪裁切。
     fontawesome_icon_name                 : file-pdf
     background_color                      : "#FFB84D"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
     
   - title                                 : 纸样存储
-    description                           : 保存 PDF / PLT / SVG 纸样。按款式、格式进行分类管理，清晰有序，易于查找。
+    description                           : 保存 PDF、PLT、SVG 纸样。按款式、格式进行分类管理，清晰有序，易于查找。
     fontawesome_icon_name                 : file-image
     background_color                      : "#8BDDC9"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
   - title                                 : 缝纫社区
-    description                           : 加入缝纫社区，和同好分享交流，帮助你找到喜欢的设计师，适合纸样、教程和面辅料。
+    description                           : 加入缝纫社区，和同好分享交流，帮助你找到喜欢的设计师、纸样、教程和面辅料。
     fontawesome_icon_name                 : users
     background_color                      : "#F6C1C9"                                    # Optional. Background color for this feature card (e.g. "#f5f5f5")
 
