@@ -1,113 +1,140 @@
-# Automatic App Landing Page
-**Create and deploy an iOS app landing page on GitHub Pages in only five minutes.**
+# pandapattern.com 主页
 
-Designed for GitHub Pages for super easy set up. 
+## 安装和设置
 
-🔧 Fork this repo
+### 前置要求
 
-🗝 Enter iOS App ID in `_config.yml`
+- Ruby 2.7 或更高版本
+- Bundler gem
 
-📲 Upload video preview or screenshot
+### 安装步骤
 
-🎨 Customise site in `_config.yml` (no HTML/CSS)
+1. **克隆仓库**
+   ```bash
+   git clone https://github.com/your-username/pandapattern.github.io.git
+   cd pandapattern.github.io
+   ```
 
-📝 Write Privacy Policy as markdown in `privacypolicy.md`
+2. **安装依赖**
+   ```bash
+   bundle install
+   ```
 
-🕒 Keep a changelog in `CHANGELOG.md`
+   这将安装 Jekyll 和所有必需的依赖项（通过 `Gemfile` 和 `github-pages` gem）。
 
-✅ Site becomes live at GitHub Pages repository URL, e.g. `https://your-username.github.io/your-repo-name/`.
+## 本地开发
 
-<img src="https://emilbaehr.com/files/jayson1.png" width="440"> <img src="https://emilbaehr.com/files/slor1.png" width="440">
+### 启动 Jekyll 服务器
 
+在项目根目录运行：
 
+```bash
+bundle exec jekyll serve
+```
 
+服务器将在 `http://localhost:4000` 启动。你可以在浏览器中访问该地址查看网站。
 
-## Quick Start
+### 调试和开发
 
-### Step 1: Fork this repo.
-After forking the repo, your site will be live immediately on your personal Github Pages account, e.g. `https://yourusername.github.io/your-repo-name/`.
+- **自动重新加载**：Jekyll 会自动检测文件更改并重新生成网站
+- **查看详细输出**：使用 `bundle exec jekyll serve --verbose` 查看详细日志
+- **停止服务器**：在终端中按 `Ctrl+C`
 
-*Make sure GitHub Pages is enabled for your repo. It might take some time for the site to propagate entirely.*
+### 常见问题
 
+如果遇到端口冲突，可以使用 `--port` 参数指定其他端口：
+```bash
+bundle exec jekyll serve --port 4001
+```
 
+## 配置网站
 
-### Step 2: Enter iOS App ID in `_config.yml`
-Enter your iOS app ID in the `ios_app_id` field and commit your changes. Your site will automatically rebuild with your app icon, name, price and link to App Store.
+### 基本配置
 
-You can go on with customising almost anything in the `_config.yml` file. 
+编辑 `_config.yml` 文件来配置网站。主要配置项包括：
 
-Things you can customise in `_config.yml`:
-- App Name
-- App Icon
-- App Description
-- App Price
-- App Store Link
-- Play Store Link
-- Press Kit Download Link
-- Cover Image
-- Cover Overlay Color
-- Background Color
-- Text Colors
-- iPhone Device Color
-- Your Name / Company Name
-- Link to Website
-- Social Links and Contact Info
-- Feature List (Title, text, icon)
+#### 应用信息
+- `ios_app_id`: iOS 应用 ID（用于自动获取应用信息）
+- `ios_app_country`: 国家代码（如 `cn` 表示中国）
+- `app_name`: 应用名称
+- `app_price`: 应用价格
+- `app_description`: 应用描述
+- `app_icon`: 应用图标路径
+- `appstore_link`: App Store 链接
+- `playstore_link`: Google Play Store 链接
 
+#### 功能列表（Features）
+在 `features` 部分配置功能卡片：
 
+```yaml
+features:
+  - title: 功能标题
+    description: 功能描述
+    fontawesome_icon_name: icon-name  # FontAwesome 图标名称（如 video, print, file-pdf 等）
+    background_color: "#F5E882"       # 可选：每个功能卡片的背景颜色（十六进制颜色值）
+```
 
-### Step 3: Add screenshot or video
+**注意**：
+- 每个功能卡片可以设置独立的 `background_color`
+- 如果不设置 `background_color`，将使用默认的背景颜色
+- 可以在 [FontAwesome](https://fontawesome.com/icons) 查找可用的图标名称
 
-#### Adding a screenshot
-Upload a `.png` or `.jpg` of your app to the folder `assets/screenshot/`. The name does not matter. Be sure to delete the placeholder `yourscreenshot.png`.
+#### 主题设置
+- `cover_image`: 封面图片路径
+- `cover_overlay_color`: 封面遮罩颜色
+- `cover_overlay_transparency`: 遮罩透明度（0-1）
+- `device_color`: 设备颜色（blue, black, yellow, coral, white）
+- `feature_title_color`: 功能标题颜色
+- `feature_text_color`: 功能文本颜色
+- `feature_background_color`: 功能卡片默认背景颜色
 
-#### Adding video
-Upload your video to the folder `assets/videos/`. To have support for most browsers, you need to upload two files – one for Safari and one for Chrome/Firefox.
+#### 多语言支持
+- `languages`: 支持的语言列表，如 `["zh", "en"]`
+- `default_lang`: 默认语言
 
-Video formats supported by Chrome and Firefox:
-- `.webm`
-- `.ogg`
+### 页面配置
 
-Video formats supported by Safari:
-- `.mp4`
-- `.mov`
+- **首页**：`index.html` 使用 `default` 布局
+- **其他页面**：在 `_pages` 目录下创建 Markdown 文件，使用 `page` 布局
+- **404 页面**：`404.html` 使用 `default` 布局
 
-#### Resolutions
-The videos and screenshots must have one of the following resolutions:
-- 828x1792
-- 1125x2436
-- 1242x2688
+## 部署到 GitHub Pages
 
+### 方法 1：自动部署（推荐）
 
+1. **推送代码到 GitHub**
+   ```bash
+   git add .
+   git commit -m "Update site"
+   git push origin main
+   ```
 
-### Step 4: Edit (or remove) Privacy Policy and Changelog
-Your site automatically includes pages for a Privacy Policy and a Changelog. Change the content of these pages by editing the `privacypolicy.md` and `CHANGELOG.md` files in the `_pages` directory.
+2. **启用 GitHub Pages**
+   - 进入仓库的 Settings
+   - 找到 Pages 部分
+   - 选择 Source 为 `main` 分支（或 `gh-pages` 分支）
+   - GitHub 会自动构建和部署网站
 
-In each of the markdown files, you can set the `include_in_header:` value to either `true` or `false`. This determines if the page is included in the top navigation.
-By default, only the Changelog is included in the top navigation. The title of the navigation item can also be edited, by editing the `title:` in each markdown file.
+3. **访问网站**
+   - 网站将在 `https://your-username.github.io/repo-name/` 可用
+   - 首次部署可能需要几分钟时间
 
-If you need to, you can create additional markdown based pages just by creating an `.md` file like the `privacypolicy.md` and `CHANGELOG.md` files in the `_pages` directory.
+### 方法 2：使用 GitHub Actions（可选）
 
-**Please note:** The Privacy Policy and Changelog provided are written using dummy text, so please adapt each of them for your own app.
-You can also choose not to include these pages, by simple deleting the `privacypolicy.md` and `CHANGELOG.md` files.
+如果需要更精细的控制，可以设置 GitHub Actions 工作流来自动构建和部署。
 
+### 自定义域名
 
+1. 在仓库根目录创建 `CNAME` 文件，内容为你的域名：
+   ```
+   yourdomain.com
+   ```
 
+2. 在 GitHub Pages 设置中配置自定义域名
 
-## Feedback
-If you have feedback regarding bugs or improvements, open an issue, @ me on Twitter or write me an email. You can find my contact info on my website.
+3. 在 DNS 提供商处添加 CNAME 记录指向 `your-username.github.io`
 
-I'd love to see the sites you create using this little tool.
-
-## Credits
+## 页面模版基于
+- 基于 [Automatic App Landing Page](https://github.com/emilbaehr/automatic-app-landing-page) 项目
 - [Jekyll](https://github.com/jekyll/jekyll)
 - [FontAwesome](https://fontawesome.github.io/Font-Awesome/)
-
-## Donations
-[Donations are welcome](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=S8ZZT3JXJPN92&currency_code=USD&source=url)
-
-## Author
-[Emil Baehr](https://emilbaehr.com/)
-
-## License
-[MIT License](LICENSE)
