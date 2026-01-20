@@ -843,10 +843,10 @@ footer {
 }
 
 .footerIcons .fa-stack {
-	font-size: 2.4em;
-	width: 2.4em;
-	height: 2.4em;
-	line-height: 2.4em;
+	font-size: 2.8em;
+	width: 2.8em;
+	height: 2.8em;
+	line-height: 2.8em;
 }
 
 .footerIcons .socialIconBack {
@@ -854,8 +854,8 @@ footer {
 }
 
 .socialLogo {
-	width: 48px;
-	height: 48px;
+	width: 56px;
+	height: 56px;
 	border-radius: 0;
 	object-fit: contain;
 	display: block;
@@ -865,7 +865,7 @@ footer {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	height: 2.4em;
+	height: 2.8em;
 	min-width: 200px;
 	padding: 0 20px;
 	border: 2px solid $footer-text-color;
@@ -886,16 +886,32 @@ footer {
 
 .footerLinks {
 	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
 	text-align: center;
 	padding-bottom: 70px;
+	gap: 12px;
+	color: $footer-text-color;
+	font-size: 18px;
+}
+
+.footerLinks > * {
+	margin: 0;
 }
 
 .footerLinks a {
-	margin-right: 30px;
+	color: $footer-text-color !important;
+	text-decoration: none;
 }
 
-.footerLinks a:last-child {
-	margin-right: 0px;
+.footerLinks a:visited {
+	color: $footer-text-color !important;
+}
+
+.footerLinks a:hover {
+	color: $footer-text-color !important;
+	text-decoration: underline;
 }
 
 
@@ -905,15 +921,7 @@ footer {
 		flex-direction: row;
 		flex-wrap: wrap;
 		justify-content: center;
-	}
-
-	.footerLinks a {
-		margin-right: 20px;
-		margin-top: 0px;
-	}
-
-	.footerLinks a:last-child {
-		margin-right: 0px;
+		gap: 6px;
 	}	
 
 }

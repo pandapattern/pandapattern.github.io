@@ -122,14 +122,10 @@
 
 	</div>
 	<div class="footerLinks">
-		{% assign current_lang = page.lang | default: site.default_lang %}
-		{% for page_item in site.pages %}
-			{% if page_item.lang == current_lang %}
-				<a href="{{ page_item.url | relative_url }}" target="_self">{{ page_item.title }}</a>
-			{% endif %}
-		{% endfor %}
-		{% if site.presskit_download_link %}
-			<a href="{{ site.presskit_download_link }}">Press Kit</a>
-		{% endif %}
+		<span>&copy;2026 熊手纸样</span>
+		<span>·</span>
+		<a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2026002961</a>
+		<span>·</span>
+		<a href="/zh/privacypolicy/" target="_self">隐私政策</a>
 	</div>
 </footer>
