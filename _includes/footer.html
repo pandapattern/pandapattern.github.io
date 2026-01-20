@@ -76,6 +76,50 @@
 			</a>
 		{% endif %}
 
+		{% if site.xiaohongshu_username %}
+			<a href="https://www.xiaohongshu.com/user/profile/{{ site.xiaohongshu_username }}">
+				{% if site.xiaohongshu_logo %}
+					<img src="{{ site.xiaohongshu_logo | relative_url }}" alt="Xiaohongshu" class="socialLogo">
+				{% else %}
+					<span class="fa-stack fa-1x">
+						<i class="socialIconBack fas fa-circle fa-stack-2x"></i>
+						<i class="socialIconTop fas fa-heart fa-stack-1x"></i>
+					</span>
+				{% endif %}
+			</a>
+		{% endif %}
+
+		{% if site.bilibili_username %}
+			<a href="https://space.bilibili.com/{{ site.bilibili_username }}">
+				{% if site.bilibili_logo %}
+					<img src="{{ site.bilibili_logo | relative_url }}" alt="Bilibili" class="socialLogo">
+				{% else %}
+					<span class="fa-stack fa-1x">
+						<i class="socialIconBack fas fa-circle fa-stack-2x"></i>
+						<i class="socialIconTop fas fa-play-circle fa-stack-1x"></i>
+					</span>
+				{% endif %}
+			</a>
+		{% endif %}
+
+		{% if site.douyin_username %}
+			<a href="https://www.douyin.com/user/{{ site.douyin_username }}">
+				{% if site.douyin_logo %}
+					<img src="{{ site.douyin_logo | relative_url }}" alt="Douyin" class="socialLogo">
+				{% else %}
+					<span class="fa-stack fa-1x">
+						<i class="socialIconBack fas fa-circle fa-stack-2x"></i>
+						<i class="socialIconTop fas fa-music fa-stack-1x"></i>
+					</span>
+				{% endif %}
+			</a>
+		{% endif %}
+
+		<div class="footerSearchBox">
+			<i class="fas fa-search"></i>
+			<span>搜索 熊手纸样</span>
+		</div>
+
 	</div>
 	<div class="footerLinks">
 		{% assign current_lang = page.lang | default: site.default_lang %}
