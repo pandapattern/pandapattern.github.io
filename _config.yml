@@ -101,6 +101,33 @@ footer_text_color                         : "#555555"
 
 
 
+####################################################
+### SEO Configuration ###
+####################################################
+
+# SEO Basic Settings
+title                                      : 熊手纸样 - 投影仪裁切、拼接、打印、管理纸样
+description                                : 投影仪裁切、拼接、打印、管理纸样，一个App全搞定。数字精确校准，将纸样以实际尺寸投影到面料上，直接裁切，大幅简化裁料流程。
+url                                        : https://www.pandapattern.com
+logo                                       : /assets/app-icon.png
+image                                      : /assets/headerimage.jpg
+author                                     : Panda Pattern
+og:
+  image                                    : /assets/headerimage.jpg
+  locale                                   : zh_CN
+  type                                     : website
+
+# Baidu SEO (百度 SEO)
+baidu_site_verification                    : codeva-CfS9LwWeLt
+
+# Google SEO
+google_site_verification                  : 
+
+# Bing SEO
+bing_site_verification                    : 
+
+
+
 
 
 
@@ -139,3 +166,7 @@ collections:
 
 # Markdown rendering
 markdown: kramdown
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
