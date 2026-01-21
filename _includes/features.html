@@ -1,6 +1,13 @@
 <div class="features">
 
-    {% for feature in site.features %}
+    {% assign current_lang = page.lang | default: site.default_lang %}
+    {% if current_lang == "en" %}
+        {% assign features_list = site.features_en %}
+    {% else %}
+        {% assign features_list = site.features %}
+    {% endif %}
+
+    {% for feature in features_list %}
 
     {% if feature.title %}
     <div class="feature"{% if feature.background_color %} style="background-color: {{ feature.background_color }};"{% endif %}>

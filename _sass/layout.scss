@@ -252,6 +252,8 @@ nav > ul li a:active {
 	padding: 5px 10px;
 	border-radius: 4px;
 	transition: all 0.3s ease;
+	white-space: nowrap;
+	display: inline-block;
 }
 
 .headerBackground .lang-link {
@@ -787,8 +789,8 @@ nav > ul li a:active {
 	}
 
 	.featureText > h3 {
-		font-size: 30px;
-		font-weight: 900;
+		font-size: 24px;
+		font-weight: 800;
 	}
 
 	.feature:nth-child(3n) {
@@ -891,7 +893,7 @@ footer {
 	flex-wrap: wrap;
 	text-align: center;
 	padding-bottom: 70px;
-	gap: 12px;
+	gap: 10px;
 	color: $footer-text-color;
 	font-size: 18px;
 }

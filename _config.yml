@@ -127,10 +127,7 @@ og:
 baidu_site_verification                    : codeva-CfS9LwWeLt
 
 # Google SEO
-google_site_verification                  : 
-
-# Bing SEO
-bing_site_verification                    : 
+google_site_verification                  : BwRf-BTaC1euVVX4-QfPIY1jpRu4gPSDwo6H_wiqthE
 
 
 
@@ -141,6 +138,49 @@ bing_site_verification                    :
 
 
 
+
+
+
+####################################################
+### English Configuration ###
+####################################################
+
+# App Info (English)
+app_name_en                               : Panda Pattern
+app_price_en                              : Free (In-App Purchases)
+app_description_en                        : Cut fabric with projector, stitch, print, and store sewing patterns - all in one app.
+
+# Feature List (English)
+features_en                               :
+
+  - title                                 : Projector Cutting
+    description                           : Digital precision calibration projects patterns at actual size onto fabric for direct cutting, greatly simplifying the cutting process.
+    fontawesome_icon_name                 : video
+    background_color                      : "#F5E882"
+
+  - title                                 : Pattern Printing
+    description                           : Large pattern tiled printing with automatic cutting for A4, A3 and other home paper sizes. No format conversion needed, print directly from your phone.
+    fontawesome_icon_name                 : print
+    background_color                      : "#90D5F2"
+
+  - title                                 : Pattern Stitching
+    description                           : Stitch A4, A3 size patterns into full-size large patterns. Stitched patterns can be cut with a projector.
+    fontawesome_icon_name                 : file-pdf
+    background_color                      : "#FFB84D"
+    
+  - title                                 : Pattern Storage
+    description                           : Save PDF, PLT, SVG patterns. Organize by style and format for clear, easy-to-find management.
+    fontawesome_icon_name                 : file-image
+    background_color                      : "#8BDDC9"
+
+  - title                                 : Sewing Community
+    description                           : Join the sewing community to share and exchange with fellow enthusiasts, helping you find favorite designers, patterns, tutorials, and fabrics.
+    fontawesome_icon_name                 : users
+    background_color                      : "#F6C1C9"
+
+# SEO Basic Settings (English)
+title_en                                   : Panda Pattern - Project, Cut, Stitch, Print and Store Patterns
+description_en                             : Cut fabric with projector, stitch, print, and store sewing patterns - all in one app. Digital precision calibration projects patterns at actual size onto fabric for direct cutting.
 
 
 

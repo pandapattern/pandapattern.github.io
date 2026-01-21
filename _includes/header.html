@@ -15,35 +15,49 @@
 			{% endif %}
 			<div class="divider"></div>
 		</div>
-		<p class="headerName">{{ site.app_name }}</p>
+		{% assign current_lang = page.lang | default: site.default_lang %}
+		{% if current_lang == "en" %}
+			<p class="headerName">{{ site.app_name_en }}</p>
+		{% else %}
+			<p class="headerName">{{ site.app_name }}</p>
+		{% endif %}
 	</div>
 	<nav class="scroll">
 		<ul>
-			{% assign current_lang = page.lang | default: site.default_lang %}
 			{% for page_item in site.pages %}
 				{% if page_item.include_in_header == true and page_item.lang == current_lang %}
-				<li><a href="{{ page_item.url | relative_url }}" target="_self">{{ page_item.title }}</a></li>
+					<li><a href="{{ page_item.url | relative_url }}" target="_self">{{ page_item.title }}</a></li>
 				{% endif %}
 			{% endfor %}
 			{% if site.presskit_download_link %}
 				<li><a href="{{ site.presskit_download_link }}">Press Kit</a></li>
 			{% endif %}
 		</ul>
-	</nav>
-	{% if page.lang %}
+	{% assign current_lang = page.lang | default: site.default_lang %}
+	{% if page.lang or page.url == '/' or page.url == '/index.html' %}
 	<div class="lang-switcher">
-		{% assign current_path = page.url | remove_first: '/' | remove: '/' | split: '/' %}
-		{% if current_path.size >= 2 %}
-			{% assign page_name = current_path[1] %}
-		{% else %}
-			{% assign page_name = page.url | remove: '/' | remove: '.html' | split: '/' | last %}
-		{% endif %}
 		{% for lang in site.languages %}
 			{% if lang != current_lang %}
-				{% assign target_url = '/' | append: lang | append: '/' | append: page_name | append: '/' %}
-				<a href="{{ target_url }}" class="lang-link">{{ site.lang_names[lang] }}</a>
+				{% if page.url == '/' or page.url == '/index.html' or page.url == '/en/' or page.url == '/en/index.html' %}
+					{% if lang == 'en' %}
+						<a href="/en/" class="lang-link">{{ site.lang_names[lang] }}</a>
+					{% else %}
+						<a href="/" class="lang-link">{{ site.lang_names[lang] }}</a>
+					{% endif %}
+				{% else %}
+					{% assign current_path = page.url | remove_first: '/' | remove: '/' | split: '/' %}
+					{% if current_path.size >= 2 %}
+						{% assign page_name = current_path[1] %}
+					{% else %}
+						{% assign page_name = page.url | remove: '/' | remove: '.html' | split: '/' | last %}
+					{% endif %}
+					{% assign target_url = '/' | append: lang | append: '/' | append: page_name | append: '/' %}
+					<a href="{{ target_url }}" class="lang-link">{{ site.lang_names[lang] }}</a>
+				{% endif %}
 			{% endif %}
 		{% endfor %}
 	</div>
 	{% endif %}
+</nav>
+
 </header>
